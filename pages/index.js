@@ -1,65 +1,65 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import React, { useRef, useEffect } from "react";
+import MarkdowPreview from "../components/MarkdownPreview";
+import editorOptions from "../constants/editorOptions";
+import useIpcEvents from "../hooks/useIpcEvents";
+const { ipcRenderer } = require("electron");
 
-export default function Home() {
+import {
+  SELECT_ALL,
+  SET_EDITOR_TEXT,
+  SET_THEME,
+  SET_ALLOW_HTML,
+  SAVE_CONTENT_IN_STORE,
+} from "../constants";
+
+const Home = () => {
+  const editor = useRef(null);
+  const [content, setContent] = useIpcEvents({
+    initValue: "",
+    event: SET_EDITOR_TEXT,
+  });
+
+  const selectAll = (editor) => editor.current.execCommand("selectAll");
+
+  const [theme] = useIpcEvents({ initValue: "yonce", event: SET_THEME });
+  const [allowHtml] = useIpcEvents({ initValue: false, event: SET_ALLOW_HTML });
+  useIpcEvents({ event: SELECT_ALL, callback: selectAll.bind(null, editor) });
+
+  const onChangeHandler = (editor, data, value) => {
+    setContent(value);
+    ipcRenderer.send(SAVE_CONTENT_IN_STORE, content);
+  };
+
+  useEffect(() => {
+    if (editor && editor.current) editor.current.focus();
+  }, []);
+
+  let CodeMirror = null;
+  if (
+    typeof window !== "undefined" &&
+    typeof window.navigator !== "undefined"
+  ) {
+    CodeMirror = require("react-codemirror2");
+    require("codemirror/mode/markdown/markdown");
+  }
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+    <div className="layout">
+      <div className="editor">
+        {CodeMirror && (
+          <CodeMirror.Controlled
+            editorDidMount={(e) => (editor.current = e)}
+            value={content}
+            options={editorOptions(theme)}
+            onBeforeChange={onChangeHandler}
+            onChange={onChangeHandler}
+          />
+        )}
+      </div>
+      <div className="preview">
+        <MarkdowPreview allowHtml={allowHtml} markdown={content} />
+      </div>
     </div>
-  )
-}
+  );
+};
+
+export default Home;
