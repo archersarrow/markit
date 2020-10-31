@@ -6,6 +6,7 @@ const { init, updateContent } = require("./actions");
 const initShortCuts = require("./Menu/menu");
 const { ipcMain } = require("electron/main");
 
+app.name = "MarkIt";
 const {
   GET_CONTENT_FROM_STORE,
   SAVE_CONTENT_IN_STORE,
@@ -18,6 +19,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 900,
+    title: "MarkIt",
     webPreferences: {
       nodeIntegration: true,
     },
@@ -25,7 +27,7 @@ const createWindow = () => {
 
   mainWindow.loadURL(
     isDev
-      ? "http://localhost:3000/download"
+      ? "http://localhost:3000"
       : `file://${path.join(__dirname, "../build/index.html")}`
   );
 };

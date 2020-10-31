@@ -4,7 +4,12 @@ const { selectAll } = require("../actions");
 
 const themes = require("../../constants/themes.json");
 const { SET_THEME, SET_ALLOW_HTML } = require("../../constants");
-const { getTheme, setTheme, getAllowHtml, setAllowHtml } = require("../store/store");
+const {
+  getTheme,
+  setTheme,
+  getAllowHtml,
+  setAllowHtml,
+} = require("../store/store");
 
 module.exports = (mainWindow) => {
   const menuItems = [
@@ -35,10 +40,10 @@ module.exports = (mainWindow) => {
         {
           type: "separator",
         },
-        {
-          label: "Export",
-          submenu: [{ label: "Export as HTML" }, { label: "Export as PDF" }],
-        },
+        // {
+        //   label: "Export",
+        //   submenu: [{ label: "Export as HTML" }, { label: "Export as PDF" }],
+        // },
         {
           label: "Allow Html",
           type: "radio",
@@ -131,7 +136,7 @@ module.exports = (mainWindow) => {
   if (process.platform == "darwin") {
     var name = app.getName();
     menuItems.unshift({
-      label: "Mac App",
+      label: "MarkIt",
       submenu: [
         { label: "About " + name, role: "about" },
         {
