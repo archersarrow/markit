@@ -2,8 +2,8 @@ const { app } = require("electron");
 const { openFile, saveFileAs, saveFile, clearAll } = require("../helper");
 const { selectAll } = require("../actions");
 
-const themes = require("../../constants/themes.json");
-const { SET_THEME, SET_ALLOW_HTML } = require("../../constants");
+const themes = require("../constants/themes.json");
+const { SET_THEME, SET_ALLOW_HTML } = require("../constants");
 const {
   getTheme,
   setTheme,
@@ -80,9 +80,6 @@ module.exports = (mainWindow) => {
           click: selectAll.bind(null, mainWindow),
           accelerator: "CmdOrCtrl+A",
         },
-        // {
-        //   type: "separator",
-        // },
       ],
     },
 
@@ -129,7 +126,26 @@ module.exports = (mainWindow) => {
 
     {
       label: "Help",
-      submenu: [],
+      submenu: [
+        {
+          label: "Welcome",
+        },
+        {
+          label: "Release Notes",
+        },
+        {
+          type: "separator",
+        },
+        {
+          label: "Report Issue",
+        },
+        {
+          type: "separator",
+        },
+        {
+          label: "Follow in Twitter",
+        },
+      ],
     },
   ];
 

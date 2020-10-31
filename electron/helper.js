@@ -1,6 +1,6 @@
 const { BrowserWindow } = require("electron");
 const fs = require("fs");
-const { SET_EDITOR_TEXT } = require("../constants");
+const { SET_EDITOR_TEXT } = require("./constants");
 const { updateContent } = require("./actions");
 const { setContent, getContent } = require("./store/store");
 
@@ -69,7 +69,7 @@ const saveFile = () => {
 
 const clearAll = (mainWindow) => {
   setContent("");
-  updateContent(mainWindow)
+  updateContent(mainWindow);
   global.currentFilePath = null;
 };
 

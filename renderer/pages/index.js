@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import MarkdowPreview from "../components/MarkdownPreview";
 import editorOptions from "../constants/editorOptions";
 import useIpcEvents from "../hooks/useIpcEvents";
-const { ipcRenderer } = require("electron");
+const { ipcRenderer, remote } = require("electron");
 
 import {
   SELECT_ALL,
@@ -21,16 +21,26 @@ const Home = () => {
 
   const selectAll = (editor) => editor.current.execCommand("selectAll");
 
-  const [theme] = useIpcEvents({ initValue: "yonce", event: SET_THEME });
-  const [allowHtml] = useIpcEvents({ initValue: false, event: SET_ALLOW_HTML });
+  const [theme, setTheme] = useIpcEvents({
+    initValue: "yonce",
+    event: SET_THEME,
+  });
+  const [allowHtml, setAllowHtml] = useIpcEvents({
+    initValue: false,
+    event: SET_ALLOW_HTML,
+  });
   useIpcEvents({ event: SELECT_ALL, callback: selectAll.bind(null, editor) });
 
   const onChangeHandler = (editor, data, value) => {
     setContent(value);
+
     ipcRenderer.send(SAVE_CONTENT_IN_STORE, content);
   };
 
   useEffect(() => {
+    setContent(remote.getGlobal("content") || "");
+    setAllowHtml(remote.getGlobal("allowHtml") || false);
+    setTheme(remote.getGlobal("theme") || "yonce");
     if (editor && editor.current) editor.current.focus();
   }, []);
 

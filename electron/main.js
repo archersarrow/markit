@@ -1,39 +1,58 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require("electron");
-const path = require("path");
-const isDev = require("electron-is-dev");
 const { init, updateContent } = require("./actions");
 const initShortCuts = require("./Menu/menu");
 const { ipcMain } = require("electron/main");
+const { format } = require("url");
+const { join } = require("path");
 
-app.name = "MarkIt";
+const isDev = require("electron-is-dev");
+const prepareNext = require("electron-next");
+
 const {
   GET_CONTENT_FROM_STORE,
   SAVE_CONTENT_IN_STORE,
   SET_THEME,
-} = require("../constants");
-const { setContent, getTheme } = require("./store/store");
+} = require("./constants");
+const {
+  setContent,
+  getTheme,
+  getContent,
+  getAllowHtml,
+} = require("./store/store");
 
-let mainWindow = null;
-const createWindow = () => {
-  mainWindow = new BrowserWindow({
+app.whenReady().then(async () => {
+  app.name = "MarkIt";
+
+  await prepareNext("./renderer");
+  const mainWindow = new BrowserWindow({
     width: 1000,
     height: 900,
     title: "MarkIt",
+    icon: join(__dirname, "./assets/markit.tiff"),
     webPreferences: {
       nodeIntegration: true,
+      enableRemoteModule: true,
     },
   });
 
-  mainWindow.loadURL(
-    isDev
-      ? "http://localhost:3000"
-      : `file://${path.join(__dirname, "../build/index.html")}`
-  );
-};
+  mainWindow.webContents.openDevTools();
 
-app.whenReady().then(() => {
-  createWindow();
+  // const url = isDev
+  //   ? "http://localhost:3000"
+  //   : format({
+  //       pathname: join(__dirname, "../renderer/out/index.html"),
+  //       protocol: "file:",
+  //       slashes: true,
+  //     });
+
+  const url = "http://localhost:3000";
+
+  mainWindow.loadURL(url);
+  global.content = getContent();
+  global.theme = getTheme();
+  global.allowHtml = getAllowHtml();
+
   initShortCuts(mainWindow);
   init(mainWindow);
 
@@ -52,7 +71,5 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 
-  app.on("window-all-closed", function () {
-    if (process.platform !== "darwin") app.quit();
-  });
+  app.on("window-all-closed", () => app.quit());
 });
