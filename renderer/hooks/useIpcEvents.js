@@ -6,7 +6,6 @@ const useIpcEvents = ({ initValue, event, callback }) => {
   useEffect(() => {
     if (!callback)
       ipcRenderer.on(event, (event, data) => {
-        alert(data);
         setValue(data);
       });
     else ipcRenderer.on(event, callback);

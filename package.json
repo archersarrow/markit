@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev renderer",
     "clean": "rm -rf dist renderer/.next renderer/out",
-    "start": "electron .",
+    "start": "npm run dev renderer && electron .",
     "build": "next build renderer && next export renderer",
     "pack-app": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder"
