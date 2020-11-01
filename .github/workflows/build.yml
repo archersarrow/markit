@@ -1,38 +1,43 @@
-jobs:
-  build:
+name: Markit CD
+on: [push]
+jobs: 
+  build: 
     name: MarkItCI_CD
-
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-
-    steps:
-      - name: checkout
+    runs-on: "${{ matrix.os }}"
+    steps: 
+      - 
+        name: checkout
         uses: actions/checkout@v2
-      - name: set tag version #If needed, here you can can compare the value form package.json with ${GITHUB_REF##*v}.
+      - 
+        name: "set tag version"
+        run: "echo \"::set-env name=version::${GITHUB_REF##*v}\"\n"
         shell: bash
-        run: |
-          echo "::set-env name=version::${GITHUB_REF##*v}"
-
-      - name: set artifact&asset name for ubuntu
+      - 
         if: runner.os=='linux'
+        name: "set artifact&asset name for ubuntu"
         run: |
-          echo "::set-env name=artifactname::markit_${version}_amd64.deb"
-          echo "::set-env name=assetname::markit_${version}_amd64.deb"
-      - name: set artifact&asset name for windows
-        shell: bash
+            echo "::set-env name=artifactname::markit_${version}_amd64.deb"
+            echo "::set-env name=assetname::markit_${version}_amd64.deb"
+      - 
         if: runner.os=='windows'
+        name: "set artifact&asset name for windows"
         run: |
-          echo "::set-env name=artifactname::markit Setup ${version}.exe"
-          echo "::set-env name=assetname::markit Setup ${version}.exe"
-      - name: Upload Release Assets
+            echo "::set-env name=artifactname::markit Setup ${version}.exe"
+            echo "::set-env name=assetname::markit Setup ${version}.exe"
+        shell: bash
+      - 
+        env: 
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        name: "Upload Release Assets"
         uses: saketh-kowtha/markit@v1-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+        with: 
+          asset_name: "${{ env.assetname }}"
           file: "./electron/dist/${{ env.artifactname }}"
-          asset_name: ${{ env.assetname }}
-          tag: ${{ github.ref }}
           overwrite: true
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          tag: "${{ github.ref }}"
+    strategy: 
+      matrix: 
+        os: 
+          - ubuntu-latest
+          - windows-latest
