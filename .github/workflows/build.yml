@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macOS-10.14, windows-2016, ubuntu-18.04]
+        os: [macOS-latest, windows-latest, ubuntu-latest]
 
     steps:
       - name: Context
@@ -30,17 +30,24 @@ jobs:
         run: |
           yarn run dist
       - name: Cleanup artifacts
+        if: matrix.os != 'windows-latest'
         run: |
-          npx rimraf "dist/!(*.exe|*.deb|*.AppImage|*.dmg)"
+          mkdir artifacts
+          mv "dist/(*.exe,*.deb,*.AppImage,*.dmg)" artifacts || true
+      - name: Cleanup artifacts Win
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir artifacts
+          mv dist/*.exe artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
         with:
-          name: ${{ matrix.os }}
-          path: dist
+          name: ${{matrix.os}}
+          path: artifacts
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: "dist/**"
+          files: "artifacts/**"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
