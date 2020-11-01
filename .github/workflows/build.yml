@@ -1,46 +1,38 @@
-name: Electron CD
-
-on: [push]
-
 jobs:
   build:
+    name: MarkItCI_CD
 
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
-        os: [macOS-latest, windows-latest, ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
-      - name: Context
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: set tag version #If needed, here you can can compare the value form package.json with ${GITHUB_REF##*v}.
+        shell: bash
+        run: |
+          echo "::set-env name=version::${GITHUB_REF##*v}"
+
+      - name: set artifact&asset name for ubuntu
+        if: runner.os=='linux'
+        run: |
+          echo "::set-env name=artifactname::markit_${version}_amd64.deb"
+          echo "::set-env name=assetname::markit_${version}_amd64.deb"
+      - name: set artifact&asset name for windows
+        shell: bash
+        if: runner.os=='windows'
+        run: |
+          echo "::set-env name=artifactname::markit Setup ${version}.exe"
+          echo "::set-env name=assetname::markit Setup ${version}.exe"
+      - name: Upload Release Assets
+        uses: saketh-kowtha/markit@v1-release
         env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - uses: actions/checkout@v1
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          fetch-depth: 1
-      - name: Use Node.js 10.x
-        uses: actions/setup-node@v1
-        with:
-          node-version: 10.x
-      - name: yarn install
-        run: |
-          npm install
-      - name: Publish
-        run: |
-          npm run dist
-      - name: Cleanup artifacts
-        if: matrix.os != 'windows-latest'
-        run: |
-          mkdir artifacts
-          mv "dist/(*.exe,*.deb,*.AppImage,*.dmg)" artifacts || true
-      - name: Cleanup artifacts Win
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir artifacts
-          mv dist/*.exe artifacts
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: ${{matrix.os}}
-          path: artifacts
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "./electron/dist/${{ env.artifactname }}"
+          asset_name: ${{ env.assetname }}
+          tag: ${{ github.ref }}
+          overwrite: true
