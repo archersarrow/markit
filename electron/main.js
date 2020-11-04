@@ -36,17 +36,17 @@ app.whenReady().then(async () => {
     },
   });
 
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
-  // const url = isDev
-  //   ? "http://localhost:3000"
-  //   : format({
-  //       pathname: join(__dirname, "../renderer/out/index.html"),
-  //       protocol: "file:",
-  //       slashes: true,
-  //     });
+  const url = isDev
+    ? "http://localhost:3000"
+    : format({
+        pathname: join(__dirname, "../renderer/out/index.html"),
+        protocol: "file:",
+        slashes: true,
+      });
 
-  const url = "http://localhost:3000";
+  // const url = "http://localhost:3000";
 
   mainWindow.loadURL(url);
   global.content = getContent();

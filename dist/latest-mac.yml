@@ -1,0 +1,12 @@
+version: 0.1.1
+files:
+  - url: MarkIt-0.1.1-mac.zip
+    sha512: QLvgTa4gnjOLc4TYQ8+0SJyfvHifHdvs8ZdCfNUZBTtPFUiTgH0oyyYQreDp9TcMVUGLK6LCAxGohqT0VWTbEw==
+    size: 94250554
+    blockMapSize: 99765
+  - url: MarkIt-0.1.1.dmg
+    sha512: szdWcvtig3wmCX2foOld7QIMksoUm/k75+PtuC2szLBMqpB/A623rhN55uJYrG9lNy4hSqcQAkGkxcyDpDhfXg==
+    size: 97705928
+path: MarkIt-0.1.1-mac.zip
+sha512: QLvgTa4gnjOLc4TYQ8+0SJyfvHifHdvs8ZdCfNUZBTtPFUiTgH0oyyYQreDp9TcMVUGLK6LCAxGohqT0VWTbEw==
+releaseDate: '2020-11-03T17:39:12.499Z'
