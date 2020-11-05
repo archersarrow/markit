@@ -29,7 +29,7 @@ app.whenReady().then(async () => {
     width: 1000,
     height: 900,
     title: "MarkIt",
-    icon: join(__dirname, "./assets/markit.tiff"),
+    icon: join(__dirname, "../images/logo.tiff"),
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true,
@@ -45,8 +45,6 @@ app.whenReady().then(async () => {
         protocol: "file:",
         slashes: true,
       });
-
-  // const url = "http://localhost:3000";
 
   mainWindow.loadURL(url);
   global.content = getContent();
