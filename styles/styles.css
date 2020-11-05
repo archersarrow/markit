@@ -1,0 +1,17 @@
+body {
+  text-align: center;
+  width: 900px;
+  margin: 0 auto;
+}
+
+hr {
+  height: 6px;
+}
+
+button {
+  padding: 16px;
+  background-color: black;
+  color: white;
+  border: none;
+  outline: none;
+}
