@@ -23,3 +23,9 @@ Download for Mac os :
 
 - Save as pdf
 - Save as HTML
+
+### License
+
+Copyright Markit
+
+Licensed under the [MIT license](LICENSE)
