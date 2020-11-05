@@ -26,6 +26,4 @@ Download for Mac os :
 
 ### License
 
-Copyright Markit
-
 Licensed under the [MIT license](LICENSE)
