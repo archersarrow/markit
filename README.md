@@ -2,7 +2,9 @@
 
 ![Logo](logo.png)
 
-> Note : this is still in beta release \***\*Markit is a live preview markdown editor it allows html along with markdown.\*\***
+> Note : this is still in beta release 
+
+\***\*Markit is a live preview markdown editor it allows html along with markdown.\*\***
 
 Download for Mac os :
 
