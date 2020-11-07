@@ -1,12 +1,12 @@
 version: 0.1.1
 files:
   - url: MarkIt-0.1.1-mac.zip
-    sha512: QLvgTa4gnjOLc4TYQ8+0SJyfvHifHdvs8ZdCfNUZBTtPFUiTgH0oyyYQreDp9TcMVUGLK6LCAxGohqT0VWTbEw==
-    size: 94250554
-    blockMapSize: 99765
+    sha512: 9nwblWdWEGmH/o3aefX8DgHjLSnQrrwouf0+8X5ciOf/o/+mqmf8xpJT6Xd70DJTuoa2TpG3B8iY/K0I8cYXIw==
+    size: 106573230
+    blockMapSize: 112319
   - url: MarkIt-0.1.1.dmg
-    sha512: szdWcvtig3wmCX2foOld7QIMksoUm/k75+PtuC2szLBMqpB/A623rhN55uJYrG9lNy4hSqcQAkGkxcyDpDhfXg==
-    size: 97705928
+    sha512: rsin0lsjVSA6M55jRWmABYziq2bEB+HuWwVtpH8Qv533okE7te/T+sGxumrS2QXQuvLsF3ZRs0QkWfpxJ2IoSw==
+    size: 110432705
 path: MarkIt-0.1.1-mac.zip
-sha512: QLvgTa4gnjOLc4TYQ8+0SJyfvHifHdvs8ZdCfNUZBTtPFUiTgH0oyyYQreDp9TcMVUGLK6LCAxGohqT0VWTbEw==
-releaseDate: '2020-11-03T17:39:12.499Z'
+sha512: 9nwblWdWEGmH/o3aefX8DgHjLSnQrrwouf0+8X5ciOf/o/+mqmf8xpJT6Xd70DJTuoa2TpG3B8iY/K0I8cYXIw==
+releaseDate: '2020-11-07T12:39:04.712Z'

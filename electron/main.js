@@ -5,6 +5,7 @@ const initShortCuts = require("./Menu/menu");
 const { ipcMain } = require("electron/main");
 const { format } = require("url");
 const { join } = require("path");
+// const autoUpdater = require("electron-updater");
 
 const isDev = require("electron-is-dev");
 const prepareNext = require("electron-next");
@@ -23,7 +24,7 @@ const {
 
 app.whenReady().then(async () => {
   app.name = "MarkIt";
-
+  // autoUpdater.checkForUpdatesAndNotify();
   await prepareNext("./renderer");
   const mainWindow = new BrowserWindow({
     width: 1000,
