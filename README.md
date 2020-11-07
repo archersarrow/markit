@@ -6,7 +6,9 @@
 
 \***\*Markit is a live preview markdown editor it allows html along with markdown.\*\***
 
-Download for Mac os : [MarkIt-0.1.1.dmg](https://drive.google.com/file/d/1JfuTMxbGyEskhBg_QRoMBCSWgMrp3HRS/view?usp=sharing)
+Download for Mac os : [MarkIt-0.1.1.dmg](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-0.1.1.dmg)
+Download for Linux os : [MarkIt-0.1.1.dmg](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-0.1.1.AppImage)
+Download for Windows os : [MarkIt-0.1.1.dmg](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-Setup-0.1.1.exe)
 
 ### Release notes :
 
