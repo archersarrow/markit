@@ -8,9 +8,9 @@
 
 Download for Mac os : [MarkIt-0.1.1.dmg](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-0.1.1.dmg)
 
-Download for Linux os : [MarkIt-0.1.1.dmg](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-0.1.1.AppImage)
+Download for Linux os : [MarkIt-0.1.1.AppImage](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-0.1.1.AppImage)
 
-Download for Windows os : [MarkIt-0.1.1.dmg](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-Setup-0.1.1.exe)
+Download for Windows os : [MarkIt-0.1.1.exe](https://github.com/saketh-kowtha/markit/releases/download/v0.1.1/MarkIt-Setup-0.1.1.exe)
 
 ### Release notes :
 
