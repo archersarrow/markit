@@ -3,26 +3,21 @@
   "version": "0.1.1",
   "productName": "MarkIt",
   "private": true,
-  "main": "./electron/main.js",
+  "main": "./src/electron/main.js",
   "scripts": {
-    "dev": "next dev renderer",
-    "clean": "rm -rf dist renderer/.next renderer/out",
-    "start": "npm run dev renderer && electron .",
-    "pack-app": "npm run build && electron-builder --dir",
+    "dev": "next dev src/renderer",
+    "clean": "rm -rf dist src/renderer/.next src/renderer/out",
+    "test": "jest --maxWorkers=4",
+    "start": "npm run dev && electron .",
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "build": "electron-builder --mac --windows --linux",
-    "release": "electron-builder --mac --windows --linux --publish always"
+    "release": "npm t && electron-builder --mac --windows --linux --publish always"
   },
   "build": {
-    "appId": "com.yourcompany.yourapp",
     "productName": "MarkIt",
     "mac": {
-      "category": "public.app-category.lifestyle",
       "icon": "./electron/assets/markit.tiff"
-    },
-    "dmg": {
-      "icon": false
     },
     "linux": {
       "target": [
@@ -31,20 +26,21 @@
       "category": "Productivity",
       "icon": "./electron/assets/markit.tiff"
     },
+    "win": {
+      "icon": "./electron/assets/markit.tiff"
+    },
     "asar": true,
     "files": [
-      "electron",
-      "renderer/out"
+      "src/electron",
+      "src/renderer/out"
     ]
   },
   "dependencies": {
     "codemirror": "^5.58.2",
-    "concurrently": "^3.5.0",
     "electron-is-dev": "^1.1.0",
     "electron-next": "^3.1.5",
     "electron-store": "^6.0.1",
     "electron-updater": "^4.3.5",
-    "fibers": "^5.0.0",
     "next": "9.5.5",
     "node-sass": "^4.14.1",
     "react": "17.0.1",
@@ -53,13 +49,17 @@
     "react-markdown": "^5.0.2",
     "react-syntax-highlighter": "^15.3.0",
     "remark-gfm": "^1.0.0",
-    "sass": "^1.28.0",
-    "wait-on": "^2.0.2"
+    "sass": "^1.28.0"
   },
   "devDependencies": {
+    "@testing-library/dom": "^7.26.5",
+    "@testing-library/jest-dom": "^5.11.5",
+    "@testing-library/react": "^11.1.1",
+    "@testing-library/react-hooks": "^3.4.2",
+    "babel-jest": "^26.6.3",
     "electron": "latest",
     "electron-builder": "latest",
-    "concurrently": "^3.5.0",
-    "wait-on": "^2.0.2"
+    "jest": "^26.6.3",
+    "react-test-renderer": "^17.0.1"
   }
 }

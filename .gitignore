@@ -40,3 +40,6 @@ MarkIt*
 
 renderer/out
 renderer/.next
+
+src/renderer/.next
+src/renderer/out
