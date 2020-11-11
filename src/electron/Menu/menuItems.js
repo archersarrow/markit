@@ -36,10 +36,21 @@ module.exports = mainWindow => {
         {
           type: 'separator'
         },
-        // {
-        //   label: "Export",
-        //   submenu: [{ label: "Export as HTML" }, { label: "Export as PDF" }],
-        // },
+        {
+          label: 'Export',
+          submenu: [
+            {
+              label: 'Export as HTML',
+              click() {
+                mainWindow.webContents.send('EXPORT_TO_HTML')
+              }
+            },
+            {
+              label: 'Export as PDF',
+              disabled: true
+            }
+          ]
+        },
         {
           label: 'Allow Html',
           type: 'checkbox',

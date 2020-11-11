@@ -2,13 +2,11 @@ import React, { useRef, useEffect } from 'react'
 import MarkdowPreview from '../components/MarkdownPreview'
 import editorOptions from '../config/editorOptions'
 import useIpcEvents from '../hooks/useIpcEvents'
-import { getLineNumber, onScroll, selectAll, getElement, srollToElement } from '../utils/editorHelpers'
-
-const { ipcRenderer, remote } = require('electron')
-
+import { getLineNumber, onScroll, selectAll, getElement, srollToElement, downLoadDoc } from '../utils/editorHelpers'
 import { SELECT_ALL, SET_EDITOR_TEXT, SET_THEME, SET_ALLOW_HTML, SAVE_CONTENT_IN_STORE } from '../constants'
-
 import initEditor from '../config/initEditor'
+
+const { ipcRenderer, remote, ipcMain } = require('electron')
 
 const Home = () => {
   const editor = useRef(null)
@@ -41,6 +39,8 @@ const Home = () => {
     setAllowHtml(getGlobal('allowHtml') || false)
     setTheme(getGlobal('theme') || 'yonce')
     if (editor?.current) editor.current.focus()
+
+    ipcRenderer.on('EXPORT_TO_HTML', downLoadDoc)
   }, [])
 
   const CodeMirror = initEditor()

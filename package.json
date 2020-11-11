@@ -8,7 +8,7 @@
     "dev": "next dev src/renderer",
     "clean": "rm -rf dist src/renderer/.next src/renderer/out",
     "test": "jest --maxWorkers=4",
-    "start": "npm run dev && electron .",
+    "start": "electron .",
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "build": "electron-builder --mac --windows --linux",
@@ -42,24 +42,26 @@
     "electron-store": "^6.0.1",
     "electron-updater": "^4.3.5",
     "next": "9.5.5",
-    "node-sass": "^4.14.1",
     "react": "17.0.1",
     "react-codemirror2": "^7.2.1",
     "react-dom": "17.0.1",
     "react-markdown": "^5.0.2",
     "react-syntax-highlighter": "^15.3.0",
     "remark-gfm": "^1.0.0",
+    "node-sass": "^4.14.1",
     "sass": "^1.28.0"
   },
   "devDependencies": {
-    "@testing-library/dom": "^7.26.5",
+    "@testing-library/dom": "^7.26.6",
     "@testing-library/jest-dom": "^5.11.5",
-    "@testing-library/react": "^11.1.1",
+    "@testing-library/react": "^11.1.2",
     "@testing-library/react-hooks": "^3.4.2",
     "babel-jest": "^26.6.3",
     "electron": "latest",
     "electron-builder": "latest",
     "jest": "^26.6.3",
-    "react-test-renderer": "^17.0.1"
+    "react-test-renderer": "^17.0.1",
+    "stylelint": "^13.7.2",
+    "stylelint-config-standard": "^20.0.0"
   }
 }
