@@ -1,13 +1,10 @@
-const {
-  getLineNumber,
-  getElement,
-  srollToElement,
-  onScroll,
-  selectAll
-} = require('../../../src/renderer/utils/editorHelpers')
+const editorUtils = require('../../../src/renderer/utils/editorHelpers')
+
 import { render } from '@testing-library/react'
 
 describe('[UTILS] - Editor Helpers', () => {
+  const { getLineNumber, getElement, srollToElement, onScroll, selectAll, downLoadDoc } = editorUtils
+
   describe('[Function] - getLineNumber', () => {
     const editor = {
       getCursor: () => ({ line: '::LINE_NUMBER::' })
@@ -39,8 +36,14 @@ describe('[UTILS] - Editor Helpers', () => {
 
     it('should return the dom element whose "data-sourcepos" attribute start with starLineNo ', () => {
       setUp()
-      let ele = getElement(1, 3)
+      const ele = getElement(1, 3)
       expect(ele.getAttribute('data-sourcepos')).toBe('1:1')
+    })
+
+    it('should return the dom element whose "data-sourcepos" attribute near to starLineNo', () => {
+      setUp()
+      const ele = getElement(3)
+      expect(ele.getAttribute('data-sourcepos')).toBe('2:1')
     })
   })
 
@@ -65,5 +68,40 @@ describe('[UTILS] - Editor Helpers', () => {
       selectAll(editor)
       expect(editor.current.execCommand).toBeCalledWith('selectAll')
     })
+  })
+
+  describe('[Function] - downLoadDoc', () => {
+    const setUp = () => render(<div data-testid="markdown-preview">::PREVIEW::</div>)
+    it('should download markdown preview content in html using anchor tag click method', () => {
+      setUp()
+      const click = jest.fn()
+      document.createElement = jest.fn()
+      document.body.appendChild = () => ({
+        click
+      })
+
+      downLoadDoc()
+
+      expect(click).toBeCalled()
+    })
+  })
+
+  describe('[Function] - onScroll', () => {
+    const lineAtHeight = jest.fn()
+
+    const editor = {
+      getWrapperElement: () => ({
+        getBoundingClientRect: () => ({
+          top: '::TOP::',
+          bottom: '::BOTTOM::'
+        })
+      }),
+      lineAtHeight
+    }
+
+    onScroll(editor)
+
+    expect(lineAtHeight).toHaveBeenCalledWith('::TOP::', 'window')
+    expect(lineAtHeight).toHaveBeenCalledWith('::BOTTOM::', 'window')
   })
 })

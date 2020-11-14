@@ -6,7 +6,7 @@ import { getLineNumber, onScroll, selectAll, getElement, srollToElement, downLoa
 import { SELECT_ALL, SET_EDITOR_TEXT, SET_THEME, SET_ALLOW_HTML, SAVE_CONTENT_IN_STORE } from '../constants'
 import initEditor from '../config/initEditor'
 
-const { ipcRenderer, remote, ipcMain } = require('electron')
+const { ipcRenderer, remote } = require('electron')
 
 const Home = () => {
   const editor = useRef(null)
@@ -45,7 +45,7 @@ const Home = () => {
 
   const CodeMirror = initEditor()
   return (
-    <div className="layout">
+    <div className="layout" data-testid="app">
       <div className="editor">
         {CodeMirror && (
           <CodeMirror.Controlled

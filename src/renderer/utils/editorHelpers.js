@@ -11,18 +11,6 @@ const srollToElement = (elmnt, behavior = 'auto') => {
   if (elmnt) elmnt.scrollIntoView({ behavior })
 }
 
-const isInViewport = element => {
-  console.log(element)
-  if (!element) return
-  const rect = element.getBoundingClientRect()
-  return (
-    rect.top >= 0 &&
-    rect.left >= 0 &&
-    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-  )
-}
-
 const onScroll = editor => {
   var rect = editor.getWrapperElement().getBoundingClientRect()
   var topVisibleLine = editor.lineAtHeight(rect.top, 'window')
@@ -41,9 +29,4 @@ const downLoadDoc = () => {
   a.click()
 }
 
-const printDoc = () => {
-  const obj = document.querySelector('[data-testid="markdown-preview"]')
-  obj.print()
-}
-
-export { getElement, getLineNumber, srollToElement, isInViewport, onScroll, selectAll, downLoadDoc }
+export { getElement, getLineNumber, srollToElement, onScroll, selectAll, downLoadDoc }
