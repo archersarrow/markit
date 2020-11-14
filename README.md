@@ -15,6 +15,13 @@ Download for Windows os : [MarkIt-1.0.0.exe](https://github.com/saketh-kowtha/ma
 ### Release notes :
 
 ##### version v1.0.0 (beta)
+- Now user can able to download in **html** format.
+- Provided **Find and Replace** for editor.
+- Added **Auto Scroll**.
+- Improved quality of code.
+- Fixed v0.1.1 bugs.
+
+##### version v0.1.1 (beta)
 
 - Live preview
 - Multi themes
@@ -22,11 +29,6 @@ Download for Windows os : [MarkIt-1.0.0.exe](https://github.com/saketh-kowtha/ma
 - Allows Css
 - Loads markdown file from local machine
 - Saves markdown file to local machine
-
-## Upcoming features
-
-- Save as pdf
-- Save as HTML
 
 ### License
 
