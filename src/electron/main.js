@@ -5,7 +5,6 @@ const initShortCuts = require('./Menu/menu')
 const { ipcMain } = require('electron/main')
 const { format } = require('url')
 const { join } = require('path')
-const autoUpdater = require('electron-updater')
 
 const isDev = require('electron-is-dev')
 const prepareNext = require('electron-next')
@@ -15,7 +14,6 @@ const { setContent, getTheme, getContent, getAllowHtml } = require('./store/stor
 
 app.whenReady().then(async () => {
   app.name = 'MarkIt'
-  if (process.platform !== 'darwin') autoUpdater.checkForUpdatesAndNotify()
 
   await prepareNext('./src/renderer')
   const mainWindow = new BrowserWindow({
