@@ -1,6 +1,6 @@
 {
   "name": "markit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "productName": "MarkIt",
   "private": true,
   "main": "./src/electron/main.js",
@@ -12,7 +12,7 @@
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "build": "electron-builder --mac --windows --linux",
-    "release": "npm t && electron-builder --mac --windows --linux --publish always"
+    "release": "npm t && electron-builder  --windows --linux --publish always"
   },
   "build": {
     "productName": "MarkIt",
@@ -24,10 +24,10 @@
         "AppImage"
       ],
       "category": "Productivity",
-      "icon": "./images/logo.tiff"
+      "icon": "./images/logo.png"
     },
     "win": {
-      "icon": "./images/logo.tiff"
+      "icon": "./images/logo.png"
     },
     "asar": true,
     "files": [
