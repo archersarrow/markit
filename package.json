@@ -17,17 +17,17 @@
   "build": {
     "productName": "MarkIt",
     "mac": {
-      "icon": "./electron/assets/markit.tiff"
+      "icon": "https://saketh-kowtha.github.io/markit/logo.png"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
       "category": "Productivity",
-      "icon": "./electron/assets/markit.tiff"
+      "icon": "https://saketh-kowtha.github.io/markit/logo.png"
     },
     "win": {
-      "icon": "./electron/assets/markit.tiff"
+      "icon": "https://saketh-kowtha.github.io/markit/logo.png"
     },
     "asar": true,
     "files": [
