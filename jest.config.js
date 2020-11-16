@@ -25,5 +25,5 @@ module.exports = {
     }
   },
   collectCoverage: true,
-  collectCoverageFrom: ['src/**/*.{js,jsx}', '!src/renderer/next.config.js']
+  collectCoverageFrom: ['src/**/*.{js,jsx}', '!src/renderer/next.config.js', '!src/renderer/out']
 }

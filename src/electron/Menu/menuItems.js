@@ -44,10 +44,6 @@ module.exports = mainWindow => {
               click() {
                 mainWindow.webContents.send('EXPORT_TO_HTML')
               }
-            },
-            {
-              label: 'Export as PDF',
-              disabled: true
             }
           ]
         },

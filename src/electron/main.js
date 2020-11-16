@@ -5,15 +5,22 @@ const initShortCuts = require('./Menu/menu')
 const { ipcMain } = require('electron/main')
 const { format } = require('url')
 const { join } = require('path')
-
 const isDev = require('electron-is-dev')
 const prepareNext = require('electron-next')
-
+const log = require('electron-log')
 const { GET_CONTENT_FROM_STORE, SAVE_CONTENT_IN_STORE, SET_THEME } = require('./constants')
 const { setContent, getTheme, getContent, getAllowHtml } = require('./store/store')
+const { autoUpdater } = require('electron-updater')
 
+autoUpdater.logger = log
+autoUpdater.logger.transports.file.level = 'info'
+log.info('App starting...')
 app.whenReady().then(async () => {
   app.name = 'MarkIt'
+  if (process.platform !== 'darwin') {
+    log.info('Checking for auto update')
+    autoUpdater.checkForUpdatesAndNotify()
+  }
 
   await prepareNext('./src/renderer')
   const mainWindow = new BrowserWindow({
@@ -47,8 +54,51 @@ app.whenReady().then(async () => {
 
   ipcMain.on(SAVE_CONTENT_IN_STORE, (event, data) => setContent(data))
 
+  function sendStatus(text) {
+    log.info(text)
+    if (win) {
+      mainWindow.webContents.send('message', text)
+    }
+  }
+
   mainWindow.webContents.on('ready-to-show', () => {
-    mainWindow.webContents.openDevTools()
+    //Auto update
+
+    if (isDev) {
+      mainWindow.webContents.openDevTools()
+    }
+
+    if (process.platform !== 'darwin') {
+      log.info('Entered inti If')
+      autoUpdater.on('checking-for-update', () => {
+        sendStatus('Checking for update...')
+      })
+      autoUpdater.on('update-available', (ev, info) => {
+        sendStatus('Update available.')
+        log.info('info', info)
+        log.info('arguments', arguments)
+      })
+      autoUpdater.on('update-not-available', (ev, info) => {
+        sendStatus('Update not available.')
+        log.info('info', info)
+        log.info('arguments', arguments)
+      })
+      autoUpdater.on('error', (ev, err) => {
+        sendStatus('Error in auto-updater.')
+        log.info('err', err)
+        log.info('arguments', arguments)
+      })
+
+      autoUpdater.on('update-downloaded', (ev, info) => {
+        sendStatus('Update downloaded.  Will quit and install in 5 seconds.')
+        log.info('info', info)
+        log.info('arguments', arguments)
+        // Wait 5 seconds, then quit and install
+        autoUpdater.quitAndInstall()
+      })
+    }
+    //Auto update end
+
     updateContent(mainWindow)
     mainWindow.webContents.send(SET_THEME, getTheme())
   })
