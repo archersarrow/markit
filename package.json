@@ -1,6 +1,6 @@
 {
   "name": "markit",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "productName": "MarkIt",
   "private": true,
   "main": "./src/electron/main.js",
@@ -16,6 +16,10 @@
   },
   "build": {
     "productName": "MarkIt",
+    "publish": {
+      "provider": "github",
+      "repo": "markit"
+    },
     "mac": {
       "icon": "./images/logo.tiff"
     },
