@@ -41,6 +41,7 @@ const Home = () => {
     if (editor?.current) editor.current.focus()
 
     ipcRenderer.on('EXPORT_TO_HTML', downLoadDoc)
+    ipcRenderer.on('message', (e, d) => alert(d))
   }, [])
 
   const CodeMirror = initEditor()
