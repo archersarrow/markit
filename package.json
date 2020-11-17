@@ -16,7 +16,7 @@
     "postinstall": "electron-builder install-app-deps",
     "build": "electron-builder --mac ",
     "dist": "next build src/renderer && next export src/renderer",
-    "release": "electron-builder  --windows  --publish always"
+    "release": "electron-builder  --windows --linux --publish always"
   },
   "build": {
     "productName": "MarkIt",

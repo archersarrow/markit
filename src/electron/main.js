@@ -56,9 +56,6 @@ app.whenReady().then(async () => {
 
   function sendStatus(text) {
     log.info(text)
-    if (win) {
-      mainWindow.webContents.send('message', text)
-    }
   }
 
   mainWindow.webContents.on('ready-to-show', () => {
@@ -93,7 +90,6 @@ app.whenReady().then(async () => {
         sendStatus('Update downloaded.  Will quit and install in 5 seconds.')
         log.info('info', info)
         log.info('arguments', arguments)
-        // Wait 5 seconds, then quit and install
         autoUpdater.quitAndInstall()
       })
     }
