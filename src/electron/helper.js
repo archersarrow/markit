@@ -1,4 +1,4 @@
-const { BrowserWindow } = require('electron')
+const { BrowserWindow, Notification } = require('electron')
 const fs = require('fs')
 const { SET_EDITOR_TEXT } = require('./constants')
 const { updateContent } = require('./actions')
@@ -70,4 +70,12 @@ const clearAll = mainWindow => {
   global.currentFilePath = null
 }
 
-module.exports = { openFile, saveFileAs, saveFile, clearAll }
+const showNotification = (title, body) => {
+  const notification = {
+    title,
+    body
+  }
+  new Notification(notification).show()
+}
+
+module.exports = { openFile, saveFileAs, saveFile, clearAll, showNotification }

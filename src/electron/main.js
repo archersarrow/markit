@@ -1,8 +1,7 @@
-// Modules to control application life and create native browser window
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, Notification } = require('electron')
 const { init, updateContent } = require('./actions')
 const initShortCuts = require('./Menu/menu')
-const { ipcMain } = require('electron/main')
+const { ipcMain, dialog } = require('electron/main')
 const { format } = require('url')
 const { join } = require('path')
 const isDev = require('electron-is-dev')
@@ -11,28 +10,35 @@ const log = require('electron-log')
 const { GET_CONTENT_FROM_STORE, SAVE_CONTENT_IN_STORE, SET_THEME } = require('./constants')
 const { setContent, getTheme, getContent, getAllowHtml } = require('./store/store')
 const { autoUpdater } = require('electron-updater')
+const { showNotification } = require('./helper')
+
+const browserWindowOptions = {
+  width: 1000,
+  height: 900,
+  title: 'MarkIt',
+  icon: join(__dirname, '../images/logo.tiff'),
+  webPreferences: {
+    nodeIntegration: true,
+    enableRemoteModule: true
+  }
+}
 
 autoUpdater.logger = log
 autoUpdater.logger.transports.file.level = 'info'
 log.info('App starting...')
+
 app.whenReady().then(async () => {
   app.name = 'MarkIt'
   if (process.platform !== 'darwin') {
     log.info('Checking for auto update')
-    autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater
+      .checkForUpdatesAndNotify()
+      .then(data => log.info(JSON.stringify(data)))
+      .catch(err => log.error(err))
   }
-
+  showNotification('Hey', 'Hello....')
   await prepareNext('./src/renderer')
-  const mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 900,
-    title: 'MarkIt',
-    icon: join(__dirname, '../images/logo.tiff'),
-    webPreferences: {
-      nodeIntegration: true,
-      enableRemoteModule: true
-    }
-  })
+  const mainWindow = new BrowserWindow(browserWindowOptions)
 
   const url = isDev
     ? 'http://localhost:3000'
@@ -54,46 +60,11 @@ app.whenReady().then(async () => {
 
   ipcMain.on(SAVE_CONTENT_IN_STORE, (event, data) => setContent(data))
 
-  function sendStatus(text) {
-    log.info(text)
-  }
-
   mainWindow.webContents.on('ready-to-show', () => {
-    //Auto update
-
     if (isDev) {
       mainWindow.webContents.openDevTools()
     }
-
-    if (process.platform !== 'darwin') {
-      log.info('Entered inti If')
-      autoUpdater.on('checking-for-update', () => {
-        sendStatus('Checking for update...')
-      })
-      autoUpdater.on('update-available', (ev, info) => {
-        sendStatus('Update available.')
-        log.info('info', info)
-        log.info('arguments', arguments)
-      })
-      autoUpdater.on('update-not-available', (ev, info) => {
-        sendStatus('Update not available.')
-        log.info('info', info)
-        log.info('arguments', arguments)
-      })
-      autoUpdater.on('error', (ev, err) => {
-        sendStatus('Error in auto-updater.')
-        log.info('err', err)
-        log.info('arguments', arguments)
-      })
-
-      autoUpdater.on('update-downloaded', (ev, info) => {
-        sendStatus('Update downloaded.  Will quit and install in 5 seconds.')
-        log.info('info', info)
-        log.info('arguments', arguments)
-        autoUpdater.quitAndInstall()
-      })
-    }
-    //Auto update end
+    autoUpdate(mainWindow)
 
     updateContent(mainWindow)
     mainWindow.webContents.send(SET_THEME, getTheme())
@@ -107,3 +78,52 @@ app.whenReady().then(async () => {
     if (process.platform !== 'darwin') app.quit()
   })
 })
+
+const autoUpdate = mainWindow => {
+  function sendStatus(text) {
+    log.info(text)
+  }
+
+  if (process.platform !== 'darwin') {
+    log.info('Entered inti If')
+    autoUpdater.on('checking-for-update', () => {
+      sendStatus('Checking for update...')
+    })
+    autoUpdater.on('update-available', (ev, info) => {
+      sendStatus('Update available.')
+      log.info('info', info)
+    })
+
+    autoUpdater.on('download-progress', progressObj => {
+      let log_message = 'Download speed: ' + progressObj.bytesPerSecond
+      log_message = log_message + ' - Downloaded ' + progressObj.percent + '%'
+      log_message = log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')'
+      sendStatus(log_message)
+      mainWindow.setProgressBar(progressObj.percent / 10)
+    })
+
+    autoUpdater.on('update-not-available', (ev, info) => {
+      sendStatus('Update not available.')
+      log.info('info', info)
+    })
+    autoUpdater.on('error', (ev, err) => {
+      sendStatus('Error in auto-updater.')
+      log.info('err', err)
+    })
+
+    autoUpdater.on('update-downloaded', (ev, info) => {
+      sendStatus('Update downloaded.  Will quit and install')
+      log.info('info', info)
+      showNotification('Update Downloaded', 'Restarting the app...')
+      dialog
+        .showMessageBox({
+          buttons: ['Restart now', 'Do it later'],
+          message: 'Restart required to update'
+        })
+        .then((res, checked) => {
+          if (res.response === 0) autoUpdater.quitAndInstall()
+        })
+        .catch(log.error)
+    })
+  }
+}
