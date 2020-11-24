@@ -1,4 +1,4 @@
-### Markit (BETA)
+### Markit 
 
 ![Logo](logo.png)
 
