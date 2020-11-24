@@ -12,6 +12,9 @@ Download for Linux os : [MarkIt.AppImage](https://github.com/saketh-kowtha/marki
 
 Download for Windows os : [MarkIt.exe](https://github.com/saketh-kowtha/markit/releases/download/v1.0.1/MarkIt-Setup-1.0.1.exe)
 
+### Demo 
+![Demo](demo.png)
+
 ### Release notes :
 
 ##### version v1.0.0 (beta)
