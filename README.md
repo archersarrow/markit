@@ -17,6 +17,10 @@ Download for Windows os : [MarkIt.exe](https://github.com/saketh-kowtha/markit/r
 
 ### Release notes :
 
+
+##### version v1.0.1 
+- Auto update
+
 ##### version v1.0.0 (beta)
 - Now user can able to download in **html** format.
 - Provided **Find and Replace** for editor.
