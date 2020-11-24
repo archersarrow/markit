@@ -36,7 +36,7 @@ app.whenReady().then(async () => {
       .then(data => log.info(JSON.stringify(data)))
       .catch(err => log.error(err))
   }
-  showNotification('Hey', 'Hello....')
+
   await prepareNext('./src/renderer')
   const mainWindow = new BrowserWindow(browserWindowOptions)
 
@@ -64,7 +64,9 @@ app.whenReady().then(async () => {
     if (isDev) {
       mainWindow.webContents.openDevTools()
     }
-    autoUpdate(mainWindow)
+    if (process.platform === 'darwin') mainWindow.webContents.openDevTools()
+
+    if (process.platform !== 'darwin') autoUpdate(mainWindow)
 
     updateContent(mainWindow)
     mainWindow.webContents.send(SET_THEME, getTheme())
@@ -75,7 +77,7 @@ app.whenReady().then(async () => {
   })
 
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
+    app.quit()
   })
 })
 
@@ -84,46 +86,44 @@ const autoUpdate = mainWindow => {
     log.info(text)
   }
 
-  if (process.platform !== 'darwin') {
-    log.info('Entered inti If')
-    autoUpdater.on('checking-for-update', () => {
-      sendStatus('Checking for update...')
-    })
-    autoUpdater.on('update-available', (ev, info) => {
-      sendStatus('Update available.')
-      log.info('info', info)
-    })
+  log.info('Entered inti If')
+  autoUpdater.on('checking-for-update', () => {
+    sendStatus('Checking for update...')
+  })
+  autoUpdater.on('update-available', (ev, info) => {
+    sendStatus('Update available.')
+    log.info('info', info)
+  })
 
-    autoUpdater.on('download-progress', progressObj => {
-      let log_message = 'Download speed: ' + progressObj.bytesPerSecond
-      log_message = log_message + ' - Downloaded ' + progressObj.percent + '%'
-      log_message = log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')'
-      sendStatus(log_message)
-      mainWindow.setProgressBar(progressObj.percent / 10)
-    })
+  autoUpdater.on('download-progress', progressObj => {
+    let log_message = 'Download speed: ' + progressObj.bytesPerSecond
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%'
+    log_message = log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')'
+    sendStatus(log_message)
+    mainWindow.setProgressBar(progressObj.percent / 10)
+  })
 
-    autoUpdater.on('update-not-available', (ev, info) => {
-      sendStatus('Update not available.')
-      log.info('info', info)
-    })
-    autoUpdater.on('error', (ev, err) => {
-      sendStatus('Error in auto-updater.')
-      log.info('err', err)
-    })
+  autoUpdater.on('update-not-available', (ev, info) => {
+    sendStatus('Update not available.')
+    log.info('info', info)
+  })
+  autoUpdater.on('error', (ev, err) => {
+    sendStatus('Error in auto-updater.')
+    log.info('err', err)
+  })
 
-    autoUpdater.on('update-downloaded', (ev, info) => {
-      sendStatus('Update downloaded.  Will quit and install')
-      log.info('info', info)
-      showNotification('Update Downloaded', 'Restarting the app...')
-      dialog
-        .showMessageBox({
-          buttons: ['Restart now', 'Do it later'],
-          message: 'Restart required to update'
-        })
-        .then((res, checked) => {
-          if (res.response === 0) autoUpdater.quitAndInstall()
-        })
-        .catch(log.error)
-    })
-  }
+  autoUpdater.on('update-downloaded', (ev, info) => {
+    sendStatus('Update downloaded.  Will quit and install')
+    log.info('info', info)
+    showNotification('Update Downloaded', 'Restarting the app...')
+    dialog
+      .showMessageBox({
+        buttons: ['Restart now', 'Do it later'],
+        message: 'Restart required to update'
+      })
+      .then((res, checked) => {
+        if (res.response === 0) autoUpdater.quitAndInstall()
+      })
+      .catch(log.error)
+  })
 }
