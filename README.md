@@ -15,11 +15,13 @@ Download for Windows os : [MarkIt.exe](https://github.com/saketh-kowtha/markit/r
 ### Demo 
 ![Demo](demo.png)
 
+##### Working on
+- Emoji support
+
 ### Release notes :
 
-
 ##### version v1.0.1 
-- Auto update
+- Added Auto update Feature
 
 ##### version v1.0.0 (beta)
 - Now user can able to download in **html** format.
