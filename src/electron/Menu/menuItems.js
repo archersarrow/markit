@@ -1,5 +1,5 @@
 const { app } = require('electron')
-const { openFile, saveFileAs, saveFile, clearAll } = require('../helper')
+const { openFile, openFolder, saveFileAs, saveFile, clearAll, exportAsHTML, exportAsPDF, exportAsPNG } = require('../helper')
 const { selectAll } = require('../actions')
 const shell = require('electron').shell
 
@@ -22,7 +22,7 @@ module.exports = mainWindow => {
         {
           label: 'Open Folder...',
           click() {
-            mainWindow.webContents.send('OPEN_WORKSPACE_FOLDER')
+            openFolder()
           },
           accelerator: 'CmdOrCtrl+Shift+O'
         },
@@ -52,19 +52,19 @@ module.exports = mainWindow => {
             {
               label: 'Export as HTML',
               click() {
-                mainWindow.webContents.send('EXPORT_TO_HTML')
+                exportAsHTML()
               }
             },
             {
               label: 'Export as PDF',
               click() {
-                mainWindow.webContents.send('EXPORT_TO_PDF')
+                exportAsPDF()
               }
             },
             {
               label: 'Export as PNG',
               click() {
-                mainWindow.webContents.send('EXPORT_TO_PNG')
+                exportAsPNG()
               }
             },
             {

@@ -5,11 +5,10 @@ const { ipcMain, dialog } = require('electron/main')
 const { format } = require('url')
 const { join, dirname, extname } = require('path')
 const { writeFile, readFile, readdir, copyFile, mkdir, stat } = require('fs/promises')
-const isDev = require('electron-is-dev')
-const prepareNext = require('electron-next')
+const isDev = !app.isPackaged
 const log = require('electron-log')
 const { GET_CONTENT_FROM_STORE, SAVE_CONTENT_IN_STORE, SET_THEME } = require('./constants')
-const { setContent, getTheme, getContent, getAllowHtml, setWorkspacePath, getWorkspacePath } = require('./store/store')
+const { setContent, getTheme, getContent, getAllowHtml, setWorkspacePath, getWorkspacePath, getGithubToken, setGithubToken } = require('./store/store')
 const { autoUpdater } = require('electron-updater')
 const { showNotification } = require('./helper')
 
@@ -17,7 +16,7 @@ const browserWindowOptions = {
   width: 1000,
   height: 900,
   title: 'MarkIt',
-  icon: join(__dirname, '../images/logo.tiff'),
+  icon: join(__dirname, '../images/logo.icns'),
   webPreferences: {
     nodeIntegration: false,
     contextIsolation: true,
@@ -31,7 +30,6 @@ autoUpdater.logger.transports.file.level = 'info'
 log.info('App starting...')
 
 const createMainWindow = async () => {
-  await prepareNext('./src/renderer')
   const mainWindow = new BrowserWindow(browserWindowOptions)
 
   const url = isDev
@@ -148,16 +146,23 @@ app.whenReady().then(async () => {
     }
   })
 
+  let openFolderBusy = false
   ipcMain.handle('OPEN_FOLDER_DIALOG', async () => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openDirectory']
-    })
-    if (!result.canceled && result.filePaths.length > 0) {
-      const folderPath = result.filePaths[0]
-      setWorkspacePath(folderPath)
-      return folderPath
+    if (openFolderBusy) return null
+    openFolderBusy = true
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory']
+      })
+      if (!result.canceled && result.filePaths.length > 0) {
+        const folderPath = result.filePaths[0]
+        setWorkspacePath(folderPath)
+        return folderPath
+      }
+      return null
+    } finally {
+      openFolderBusy = false
     }
-    return null
   })
 
   ipcMain.handle('FS_COPY_FILE', async (event, { src, dest }) => {
@@ -176,6 +181,26 @@ app.whenReady().then(async () => {
       return true
     } catch (error) {
       log.error('Failed to ensure directory:', error)
+      throw error
+    }
+  })
+
+  // Settings: GitHub token
+  ipcMain.handle('GET_GITHUB_TOKEN', async () => {
+    try {
+      return getGithubToken()
+    } catch (error) {
+      log.error('Failed to get GitHub token:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('SET_GITHUB_TOKEN', async (event, token) => {
+    try {
+      setGithubToken(token)
+      return true
+    } catch (error) {
+      log.error('Failed to set GitHub token:', error)
       throw error
     }
   })

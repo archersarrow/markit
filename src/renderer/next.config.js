@@ -1,17 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  distDir: 'out',
   images: {
     unoptimized: true
   },
   trailingSlash: true,
-  webpack(config) {
-    // Allows you to load Electron modules and
-    // native Node.js ones into your renderer
-    config.target = 'electron-renderer'
-    return config
-  }
+  experimental: {
+    transpilePackages: [
+      'react-markdown',
+      'remark-gfm',
+      'remark-math',
+      'rehype-raw',
+      'rehype-sanitize',
+      'rehype-katex',
+      'katex',
+      'mermaid'
+    ]
+  },
+  // Use Next.js defaults; do not override webpack target
 }
 
 module.exports = nextConfig

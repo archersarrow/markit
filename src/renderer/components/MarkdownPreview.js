@@ -6,11 +6,7 @@ import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeKatex from 'rehype-katex'
 import SyntaxHighlighter from './SyntaxHighlighter'
-import mermaid from 'mermaid'
 import 'katex/dist/katex.min.css'
-
-// Initialize Mermaid
-mermaid.initialize({ startOnLoad: false, theme: 'default' })
 
 const MermaidDiagram = ({ value }) => {
   const ref = useRef(null)
@@ -18,7 +14,12 @@ const MermaidDiagram = ({ value }) => {
   useEffect(() => {
     if (ref.current && value) {
       try {
-        mermaid.render(`mermaid-${Date.now()}`, value).then(({ svg }) => {
+        // Import mermaid only on the client
+        import('mermaid').then(mod => {
+          const mermaid = mod.default || mod
+          mermaid.initialize({ startOnLoad: false, theme: 'default' })
+          return mermaid.render(`mermaid-${Date.now()}`, value)
+        }).then(({ svg }) => {
           if (ref.current) {
             ref.current.innerHTML = svg
           }
@@ -95,7 +96,7 @@ export default ({ markdown, allowHtml, showToc }) => {
 
   const rehypePlugins = allowHtml
     ? [rehypeRaw, rehypeKatex, [rehypeSanitize, permissiveSchema]]
-    : [rehypeRaw, rehypeKatex, rehypeSanitize]
+    : [rehypeKatex, rehypeSanitize]
 
   const components = {
     code: CodeComponent

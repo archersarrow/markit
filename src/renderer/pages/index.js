@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react'
+import dynamic from 'next/dynamic'
 import MarkdowPreview from '../components/MarkdownPreview'
 import FileTree from '../components/FileTree'
 import TabBar from '../components/TabBar'
@@ -6,12 +7,30 @@ import editorOptions from '../config/editorOptions'
 import useIpcEvents from '../hooks/useIpcEvents'
 import { getLineNumber, onScroll, selectAll, getElement, srollToElement, downLoadDoc, exportToPNG, copyHTMLToClipboard, publishGist } from '../utils/editorHelpers'
 import { SELECT_ALL, SET_EDITOR_TEXT, SET_THEME, SET_ALLOW_HTML, SAVE_CONTENT_IN_STORE } from '../constants'
-import initEditor from '../config/initEditor'
+// Client-only CodeMirror to avoid SSR hydration mismatch
+const CodeMirrorControlled = dynamic(async () => {
+  const mod = await import('react-codemirror2')
+  await import('codemirror/mode/markdown/markdown')
+  await import('codemirror/mode/javascript/javascript.js')
+  await import('codemirror/addon/search/search.js')
+  await import('codemirror/addon/dialog/dialog.js')
+  await import('codemirror/addon/dialog/dialog.css')
+  await import('codemirror/addon/search/jump-to-line.js')
+  await import('codemirror/addon/search/match-highlighter.js')
+  await import('codemirror/addon/search/matchesonscrollbar.css')
+  await import('codemirror/addon/search/matchesonscrollbar.js')
+  await import('codemirror/addon/search/searchcursor.js')
+  return mod.Controlled
+}, { ssr: false })
 
 const Home = () => {
   const editor = useRef(null)
   const saveTimeoutRef = useRef(null)
   const previewRef = useRef(null)
+  const contentRef = useRef('')
+  const activeTabPathRef = useRef(null)
+  const openFolderInProgressRef = useRef(false)
+  const ipcBoundRef = useRef(false)
 
   // State
   const [content, setContent] = useState('')
@@ -20,6 +39,7 @@ const Home = () => {
   const [activeTabPath, setActiveTabPath] = useState(null)
   const [showToc, setShowToc] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [githubToken, setGithubToken] = useState('')
 
   const [theme, setTheme] = useIpcEvents({
     initValue: 'yonce',
@@ -59,6 +79,7 @@ const Home = () => {
 
   const onChangeHandler = (editor, data, value) => {
     setContent(value)
+    contentRef.current = value
     debouncedSave(activeTabPath, value)
 
     // Update tab content
@@ -92,7 +113,9 @@ const Home = () => {
         }
         setTabs(prev => [...prev, newTab])
         setActiveTabPath(file.path)
+        activeTabPathRef.current = file.path
         setContent(fileContent)
+        contentRef.current = fileContent
       }
     } catch (err) {
       console.error('Failed to open file:', err)
@@ -101,7 +124,9 @@ const Home = () => {
 
   const handleTabClick = useCallback((tab) => {
     setActiveTabPath(tab.path)
+    activeTabPathRef.current = tab.path
     setContent(tab.content)
+    contentRef.current = tab.content
   }, [])
 
   const handleTabClose = useCallback((tab) => {
@@ -112,16 +137,22 @@ const Home = () => {
       if (newTabs.length > 0) {
         const nextTab = newTabs[newTabs.length - 1]
         setActiveTabPath(nextTab.path)
+        activeTabPathRef.current = nextTab.path
         setContent(nextTab.content)
+        contentRef.current = nextTab.content
       } else {
         setActiveTabPath(null)
+        activeTabPathRef.current = null
         setContent('')
+        contentRef.current = ''
       }
     }
   }, [tabs, activeTabPath])
 
   // Workspace handling
   const handleOpenFolder = useCallback(async () => {
+    if (openFolderInProgressRef.current) return
+    openFolderInProgressRef.current = true
     try {
       const folderPath = await window.api.fs.openFolderDialog()
       if (folderPath) {
@@ -129,6 +160,8 @@ const Home = () => {
       }
     } catch (err) {
       console.error('Failed to open folder:', err)
+    } finally {
+      openFolderInProgressRef.current = false
     }
   }, [])
 
@@ -136,6 +169,7 @@ const Home = () => {
     const loadInitialData = async () => {
       const { content, theme, allowHtml } = await window.api.invoke('GET_GLOBALS')
       setContent(content || '')
+      contentRef.current = content || ''
       setAllowHtml(allowHtml || false)
       setTheme(theme || 'yonce')
       if (editor?.current) editor.current.focus()
@@ -156,41 +190,54 @@ const Home = () => {
     }
 
     const handlePublishGist = (_, { secret }) => {
-      publishGist(content, activeTabPath, secret)
+      publishGist(contentRef.current, activeTabPathRef.current, secret)
     }
 
     const handleToggleToc = () => {
       setShowToc(prev => !prev)
     }
 
-    const handleOpenSettings = () => {
+    const handleOpenSettings = async () => {
       setSettingsOpen(true)
+      try {
+        const token = await window.api.invoke('GET_GITHUB_TOKEN')
+        setGithubToken(token || '')
+      } catch (e) {
+        console.error('Failed to load token', e)
+      }
     }
 
     loadInitialData()
 
-    window.api.on('EXPORT_TO_HTML', downLoadDoc)
-    window.api.on('EXPORT_TO_PDF', handleExportPdf)
-    window.api.on('EXPORT_TO_PNG', handleExportPng)
-    window.api.on('COPY_HTML_TO_CLIPBOARD', handleCopyHtml)
-    window.api.on('PUBLISH_GIST', handlePublishGist)
-    window.api.on('TOGGLE_TOC', handleToggleToc)
-    window.api.on('OPEN_SETTINGS', handleOpenSettings)
-    window.api.on('OPEN_WORKSPACE_FOLDER', handleOpenFolder)
+    // Guard against double-binding in React StrictMode dev
+    if (!ipcBoundRef.current) {
+      ipcBoundRef.current = true
+      window.api.on('EXPORT_TO_HTML', downLoadDoc)
+      window.api.on('EXPORT_TO_PDF', handleExportPdf)
+      window.api.on('EXPORT_TO_PNG', handleExportPng)
+      window.api.on('COPY_HTML_TO_CLIPBOARD', handleCopyHtml)
+      window.api.on('PUBLISH_GIST', handlePublishGist)
+      window.api.on('TOGGLE_TOC', handleToggleToc)
+      window.api.on('OPEN_SETTINGS', handleOpenSettings)
+      window.api.on('OPEN_WORKSPACE_FOLDER', handleOpenFolder)
+      window.api.on('WORKSPACE_OPENED', (_, path) => setWorkspacePath(path))
+    }
 
     return () => {
-      window.api.removeListener('EXPORT_TO_HTML', downLoadDoc)
-      window.api.removeListener('EXPORT_TO_PDF', handleExportPdf)
-      window.api.removeListener('EXPORT_TO_PNG', handleExportPng)
-      window.api.removeListener('COPY_HTML_TO_CLIPBOARD', handleCopyHtml)
-      window.api.removeListener('PUBLISH_GIST', handlePublishGist)
-      window.api.removeListener('TOGGLE_TOC', handleToggleToc)
-      window.api.removeListener('OPEN_SETTINGS', handleOpenSettings)
-      window.api.removeListener('OPEN_WORKSPACE_FOLDER', handleOpenFolder)
+      if (ipcBoundRef.current) {
+        ipcBoundRef.current = false
+        window.api.removeListener('EXPORT_TO_HTML', downLoadDoc)
+        window.api.removeListener('EXPORT_TO_PDF', handleExportPdf)
+        window.api.removeListener('EXPORT_TO_PNG', handleExportPng)
+        window.api.removeListener('COPY_HTML_TO_CLIPBOARD', handleCopyHtml)
+        window.api.removeListener('PUBLISH_GIST', handlePublishGist)
+        window.api.removeListener('TOGGLE_TOC', handleToggleToc)
+        window.api.removeListener('OPEN_SETTINGS', handleOpenSettings)
+        window.api.removeListener('OPEN_WORKSPACE_FOLDER', handleOpenFolder)
+        window.api.removeListener('WORKSPACE_OPENED', () => {})
+      }
     }
-  }, [content, activeTabPath])
-
-  const CodeMirror = initEditor()
+  }, [])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -212,16 +259,13 @@ const Home = () => {
 
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           <div style={{ flex: previewVisible ? 1 : 2, overflow: 'auto' }}>
-            {CodeMirror && (
-              <CodeMirror.Controlled
-                editorDidMount={e => (editor.current = e)}
-                value={content}
-                options={editorOptions(theme)}
-                onBeforeChange={onChangeHandler}
-                onChange={onChangeHandler}
-                onScroll={onScroll}
-              />
-            )}
+            <CodeMirrorControlled
+              editorDidMount={e => (editor.current = e)}
+              value={content}
+              options={editorOptions(theme)}
+              onBeforeChange={onChangeHandler}
+              onScroll={onScroll}
+            />
           </div>
 
           {previewVisible && (
@@ -252,8 +296,29 @@ const Home = () => {
             minWidth: '400px'
           }}>
             <h2>Settings</h2>
-            <p>Settings UI coming soon...</p>
-            <button onClick={() => setSettingsOpen(false)}>Close</button>
+            <div style={{ margin: '12px 0' }}>
+              <label htmlFor="gh-token" style={{ display: 'block', fontSize: 12, color: '#555' }}>GitHub Personal Access Token</label>
+              <input
+                id="gh-token"
+                type="password"
+                value={githubToken}
+                onChange={(e) => setGithubToken(e.target.value)}
+                placeholder="ghp_..."
+                style={{ width: '100%', padding: '8px', marginTop: 6 }}
+              />
+              <div style={{ fontSize: 12, color: '#777', marginTop: 6 }}>Used for publishing gists.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setSettingsOpen(false)}>Cancel</button>
+              <button onClick={async () => {
+                try {
+                  await window.api.invoke('SET_GITHUB_TOKEN', githubToken)
+                  setSettingsOpen(false)
+                } catch (e) {
+                  console.error('Failed to save token', e)
+                }
+              }}>Save</button>
+            </div>
           </div>
         </div>
       )}

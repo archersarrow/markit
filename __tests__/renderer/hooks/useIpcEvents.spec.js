@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook } from '@testing-library/react'
 import useIpcEvents from '../../../src/renderer/hooks/useIpcEvents'
 
 import { ipcRenderer } from 'electron'
