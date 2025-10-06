@@ -14,9 +14,9 @@
     "test": "jest --maxWorkers=4",
     "start": "electron .",
     "postinstall": "electron-builder install-app-deps",
-    "build": "electron-builder --mac ",
-    "dist": "next build src/renderer && next export src/renderer",
-    "release": "electron-builder  --windows --linux --publish always"
+    "build": "next build src/renderer && electron-builder --mac",
+    "dist": "next build src/renderer",
+    "release": "next build src/renderer && electron-builder --windows --linux --publish always"
   },
   "build": {
     "productName": "MarkIt",
@@ -29,7 +29,7 @@
       "releaseType": "release"
     },
     "mac": {
-      "icon": "./images/logo.tiff"
+      "icon": "./images/logo.icns"
     },
     "linux": {
       "target": [
@@ -39,7 +39,7 @@
       "icon": "./images/logo.png"
     },
     "win": {
-      "icon": "./images/logo.png"
+      "icon": "./images/logo.ico"
     },
     "asar": true,
     "files": [
@@ -48,34 +48,42 @@
     ]
   },
   "dependencies": {
-    "codemirror": "^5.58.2",
-    "electron-is-dev": "^1.1.0",
-    "electron-log": "^4.3.0",
+    "codemirror": "^5.65.18",
+    "electron-is-dev": "^3.0.1",
+    "electron-log": "^5.2.4",
     "electron-next": "^3.1.5",
-    "electron-store": "^6.0.1",
-    "electron-updater": "^4.3.5",
-    "react-codemirror2": "^7.2.1",
-    "react-markdown": "^5.0.2",
-    "react-syntax-highlighter": "^15.3.0",
-    "remark-gfm": "^1.0.0"
+    "electron-store": "^10.0.0",
+    "electron-updater": "^6.3.9",
+    "fuse.js": "^7.1.0",
+    "html-to-image": "^1.11.13",
+    "katex": "^0.16.23",
+    "mermaid": "^11.12.0",
+    "next": "^14.2.22",
+    "react": "^18.3.1",
+    "react-codemirror2": "^7.3.0",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.2",
+    "react-syntax-highlighter": "^15.6.1",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
-    "react-dom": "17.0.1",
-    "sass": "^1.28.0",
-    "node-sass": "^4.14.1",
-    "react": "17.0.1",
-    "next": "9.5.5",
-    "@testing-library/dom": "^7.26.6",
-    "@testing-library/jest-dom": "^5.11.5",
-    "@testing-library/react": "^11.1.2",
-    "@testing-library/react-hooks": "^3.4.2",
-    "babel-jest": "^26.6.3",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/react-hooks": "^8.0.1",
+    "babel-jest": "^29.7.0",
     "babel-plugin-react-remove-properties": "^0.3.0",
-    "electron": "10.0.0",
-    "electron-builder": "latest",
-    "jest": "^26.6.3",
-    "react-test-renderer": "^17.0.1",
-    "stylelint": "^13.7.2",
-    "stylelint-config-standard": "^20.0.0"
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "react-test-renderer": "^18.3.1",
+    "sass": "^1.83.0",
+    "stylelint": "^16.12.0",
+    "stylelint-config-standard": "^36.0.1"
   }
 }

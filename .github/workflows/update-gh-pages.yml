@@ -1,0 +1,181 @@
+name: Update GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'GitHub Actions Run ID for artifacts'
+        required: false
+        type: string
+
+jobs:
+  update-pages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Determine Run ID
+        id: run_id
+        run: |
+          if [ -n "${{ github.event.inputs.run_id }}" ]; then
+            echo "run_id=${{ github.event.inputs.run_id }}" >> $GITHUB_OUTPUT
+          else
+            # Get the latest successful build-release workflow run
+            RUN_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/build-release.yml/runs?status=success&per_page=1" \
+              | jq -r '.workflow_runs[0].id')
+            echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update GitHub Pages content
+        run: |
+          RUN_ID="${{ steps.run_id.outputs.run_id }}"
+          REPO="${{ github.repository }}"
+
+          # Update README
+          cat > README.md << 'EOFREADME'
+          ### Markit
+
+          ![Logo](logo.png)
+
+          > Note : this is still in beta release
+
+          **Markit is a live preview markdown editor it allows html along with markdown.**
+
+          ### Downloads
+
+          <div id="download-section">
+            <p>Download for your platform:</p>
+            <ul id="download-links">
+              <li><a href="https://github.com/REPO_PLACEHOLDER/actions/runs/RUN_ID_PLACEHOLDER" id="mac-download">Download for macOS (.dmg)</a></li>
+              <li><a href="https://github.com/REPO_PLACEHOLDER/actions/runs/RUN_ID_PLACEHOLDER" id="linux-download">Download for Linux (.AppImage)</a></li>
+              <li><a href="https://github.com/REPO_PLACEHOLDER/actions/runs/RUN_ID_PLACEHOLDER" id="windows-download">Download for Windows (.exe)</a></li>
+            </ul>
+            <p><em>Or check <a href="https://github.com/REPO_PLACEHOLDER/releases">Releases</a> for stable versions</em></p>
+          </div>
+
+          ### Demo
+          ![Demo](demo.png)
+
+          ### Features
+          - Live markdown preview
+          - Multi themes support
+          - HTML and CSS support
+          - Find and Replace
+          - Auto Scroll
+          - Download as HTML
+          - Auto update feature
+          - Emoji support (coming soon)
+
+          ### Release notes :
+
+          ##### version v1.0.1
+          - Added Auto update Feature
+
+          ##### version v1.0.0 (beta)
+          - Now user can able to download in **html** format.
+          - Provided **Find and Replace** for editor.
+          - Added **Auto Scroll**.
+          - Improved quality of code.
+          - Fixed v0.1.1 bugs.
+
+          ##### version v0.1.1 (beta)
+          - Live preview
+          - Multi themes
+          - Allows Html
+          - Allows Css
+          - Loads markdown file from local machine
+          - Saves markdown file to local machine
+
+          ### License
+
+          Licensed under the [MIT license](LICENSE)
+          EOFREADME
+
+          # Replace placeholders
+          sed -i "s|REPO_PLACEHOLDER|$REPO|g" README.md
+          sed -i "s|RUN_ID_PLACEHOLDER|$RUN_ID|g" README.md
+
+          # Update index.html
+          cat > index.html << 'EOFHTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>MarkIt - Live Preview Markdown Editor</title>
+              <link rel="stylesheet" href="styles/styles.css">
+          </head>
+          <body>
+              <div class="container">
+                  <header>
+                      <img src="logo.png" alt="MarkIt Logo" class="logo">
+                      <h1>MarkIt</h1>
+                      <p class="subtitle">A live preview markdown editor with HTML support</p>
+                      <span class="badge">Beta</span>
+                  </header>
+
+                  <section class="download-section">
+                      <h2>Download for <span id="os">Your Platform</span></h2>
+                      <div class="download-buttons" id="download-buttons">
+                          <a href="#" class="download-btn primary" id="primary-download" data-platform="">
+                              <span class="platform-icon" id="platform-icon">💻</span>
+                              <span id="primary-download-text">Download</span>
+                          </a>
+                      </div>
+                      <div class="other-downloads">
+                          <p>Other platforms:</p>
+                          <div class="platform-links" id="platform-links"></div>
+                      </div>
+                      <p class="release-note">
+                          <a href="https://github.com/REPO_PLACEHOLDER/releases">View all releases</a> |
+                          <a href="https://github.com/REPO_PLACEHOLDER/actions/runs/RUN_ID_PLACEHOLDER">Latest build artifacts</a>
+                      </p>
+                  </section>
+
+                  <section class="demo-section">
+                      <h2>Demo</h2>
+                      <img src="demo.png" alt="MarkIt Demo" class="demo-image">
+                  </section>
+
+                  <section class="features-section">
+                      <h2>Features</h2>
+                      <ul class="features-list">
+                          <li>✨ Live markdown preview</li>
+                          <li>🎨 Multiple themes support</li>
+                          <li>📝 HTML and CSS support</li>
+                          <li>🔍 Find and Replace</li>
+                          <li>📜 Auto Scroll</li>
+                          <li>💾 Export to HTML</li>
+                          <li>🔄 Auto update feature</li>
+                          <li>😊 Emoji support (coming soon)</li>
+                      </ul>
+                  </section>
+
+                  <footer>
+                      <p>Licensed under the <a href="LICENSE">MIT license</a></p>
+                      <p><a href="https://github.com/REPO_PLACEHOLDER">View on GitHub</a></p>
+                  </footer>
+              </div>
+              <script>
+                const REPO = 'REPO_PLACEHOLDER';
+                const RUN_ID = 'RUN_ID_PLACEHOLDER';
+              </script>
+              <script src="scripts/index.js"></script>
+          </body>
+          </html>
+          EOFHTML
+
+          # Replace placeholders in index.html
+          sed -i "s|REPO_PLACEHOLDER|$REPO|g" index.html
+          sed -i "s|RUN_ID_PLACEHOLDER|$RUN_ID|g" index.html
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md index.html
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update download links with artifacts from run ${{ steps.run_id.outputs.run_id }}" && git push)

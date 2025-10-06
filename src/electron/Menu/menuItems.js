@@ -20,6 +20,16 @@ module.exports = mainWindow => {
           accelerator: 'CmdOrCtrl+O'
         },
         {
+          label: 'Open Folder...',
+          click() {
+            mainWindow.webContents.send('OPEN_WORKSPACE_FOLDER')
+          },
+          accelerator: 'CmdOrCtrl+Shift+O'
+        },
+        {
+          type: 'separator'
+        },
+        {
           label: 'Save',
           click() {
             saveFile()
@@ -44,6 +54,28 @@ module.exports = mainWindow => {
               click() {
                 mainWindow.webContents.send('EXPORT_TO_HTML')
               }
+            },
+            {
+              label: 'Export as PDF',
+              click() {
+                mainWindow.webContents.send('EXPORT_TO_PDF')
+              }
+            },
+            {
+              label: 'Export as PNG',
+              click() {
+                mainWindow.webContents.send('EXPORT_TO_PNG')
+              }
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Copy HTML to Clipboard',
+              click() {
+                mainWindow.webContents.send('COPY_HTML_TO_CLIPBOARD')
+              },
+              accelerator: 'CmdOrCtrl+Shift+C'
             }
           ]
         },
@@ -110,7 +142,13 @@ module.exports = mainWindow => {
         {
           type: 'separator'
         },
-        { label: 'Toggle Output' }
+        {
+          label: 'Toggle Output',
+          click() {
+            mainWindow.webContents.send('TOGGLE_PREVIEW')
+          },
+          accelerator: 'CmdOrCtrl+Shift+P'
+        }
       ]
     },
 
@@ -125,6 +163,47 @@ module.exports = mainWindow => {
         if (getTheme() === theme.value) theme.checked = true
         return theme
       })
+    },
+
+    {
+      label: 'Share',
+      submenu: [
+        {
+          label: 'Publish Gist (Public)',
+          click() {
+            mainWindow.webContents.send('PUBLISH_GIST', { secret: false })
+          }
+        },
+        {
+          label: 'Publish Gist (Secret)',
+          click() {
+            mainWindow.webContents.send('PUBLISH_GIST', { secret: true })
+          }
+        }
+      ]
+    },
+
+    {
+      label: 'Settings',
+      submenu: [
+        {
+          label: 'Preferences...',
+          click() {
+            mainWindow.webContents.send('OPEN_SETTINGS')
+          },
+          accelerator: 'CmdOrCtrl+,'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Toggle Table of Contents',
+          click() {
+            mainWindow.webContents.send('TOGGLE_TOC')
+          },
+          accelerator: 'CmdOrCtrl+T'
+        }
+      ]
     },
 
     {
@@ -146,13 +225,19 @@ module.exports = mainWindow => {
           type: 'separator'
         },
         {
-          label: 'Report Issue'
+          label: 'Report Issue',
+          click() {
+            shell.openExternal('https://github.com/saketh-kowtha/markit/issues')
+          }
         },
         {
           type: 'separator'
         },
         {
-          label: 'Follow in Twitter'
+          label: 'Follow in Twitter',
+          click() {
+            shell.openExternal('https://twitter.com/saketh_kowtha')
+          }
         }
       ]
     }

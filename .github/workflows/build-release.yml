@@ -1,0 +1,591 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: macos-latest
+            platform: mac
+            artifact_name: '*.dmg'
+            artifact_path: 'dist/*.dmg'
+          - os: ubuntu-latest
+            platform: linux
+            artifact_name: '*.AppImage'
+            artifact_path: 'dist/*.AppImage'
+          - os: windows-latest
+            platform: windows
+            artifact_name: '*.exe'
+            artifact_path: 'dist/*.exe'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js app
+        run: npm run dist
+
+      - name: Build Electron app (Mac)
+        if: matrix.platform == 'mac'
+        run: npx electron-builder --mac --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron app (Linux)
+        if: matrix.platform == 'linux'
+        run: npx electron-builder --linux --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron app (Windows)
+        if: matrix.platform == 'windows'
+        run: npx electron-builder --windows --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: markit-${{ matrix.platform }}
+          path: ${{ matrix.artifact_path }}
+          retention-days: 30
+
+  update-downloads-page:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get artifact URLs
+        id: artifacts
+        run: |
+          echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+          echo "repo=${{ github.repository }}" >> $GITHUB_OUTPUT
+
+      - name: Update download links in README
+        run: |
+          RUN_ID="${{ github.run_id }}"
+          REPO="${{ github.repository }}"
+
+          # Update README with artifact download links
+          cat > README.md << 'EOF'
+          ### Markit
+
+          ![Logo](logo.png)
+
+          > Note : this is still in beta release
+
+          **Markit is a live preview markdown editor it allows html along with markdown.**
+
+          ### Downloads
+
+          <div id="download-section">
+            <p>Download for your platform:</p>
+            <ul id="download-links">
+              <li><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" id="mac-download">Download for macOS (.dmg)</a></li>
+              <li><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" id="linux-download">Download for Linux (.AppImage)</a></li>
+              <li><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" id="windows-download">Download for Windows (.exe)</a></li>
+            </ul>
+            <p><em>Or check <a href="https://github.com/${{ github.repository }}/releases">Releases</a> for stable versions</em></p>
+          </div>
+
+          ### Demo
+          ![Demo](demo.png)
+
+          ### Features
+          - Live markdown preview
+          - Multi themes support
+          - HTML and CSS support
+          - Find and Replace
+          - Auto Scroll
+          - Download as HTML
+          - Auto update feature
+          - Emoji support (coming soon)
+
+          ### Release notes :
+
+          ##### version v1.0.1
+          - Added Auto update Feature
+
+          ##### version v1.0.0 (beta)
+          - Now user can able to download in **html** format.
+          - Provided **Find and Replace** for editor.
+          - Added **Auto Scroll**.
+          - Improved quality of code.
+          - Fixed v0.1.1 bugs.
+
+          ##### version v0.1.1 (beta)
+          - Live preview
+          - Multi themes
+          - Allows Html
+          - Allows Css
+          - Loads markdown file from local machine
+          - Saves markdown file to local machine
+
+          ### License
+
+          Licensed under the [MIT license](LICENSE)
+          EOF
+
+      - name: Update index.html with better UI
+        run: |
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>MarkIt - Live Preview Markdown Editor</title>
+              <link rel="stylesheet" href="styles/styles.css">
+          </head>
+          <body>
+              <div class="container">
+                  <header>
+                      <img src="logo.png" alt="MarkIt Logo" class="logo">
+                      <h1>MarkIt</h1>
+                      <p class="subtitle">A live preview markdown editor with HTML support</p>
+                      <span class="badge">Beta</span>
+                  </header>
+
+                  <section class="download-section">
+                      <h2>Download for <span id="os">Your Platform</span></h2>
+                      <div class="download-buttons" id="download-buttons">
+                          <a href="#" class="download-btn primary" id="primary-download" data-platform="">
+                              <span class="platform-icon" id="platform-icon">💻</span>
+                              <span id="primary-download-text">Download</span>
+                          </a>
+                      </div>
+                      <div class="other-downloads">
+                          <p>Other platforms:</p>
+                          <div class="platform-links" id="platform-links"></div>
+                      </div>
+                      <p class="release-note">
+                          <a href="https://github.com/${{ github.repository }}/releases">View all releases</a> |
+                          <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Latest build artifacts</a>
+                      </p>
+                  </section>
+
+                  <section class="demo-section">
+                      <h2>Demo</h2>
+                      <img src="demo.png" alt="MarkIt Demo" class="demo-image">
+                  </section>
+
+                  <section class="features-section">
+                      <h2>Features</h2>
+                      <ul class="features-list">
+                          <li>✨ Live markdown preview</li>
+                          <li>🎨 Multiple themes support</li>
+                          <li>📝 HTML and CSS support</li>
+                          <li>🔍 Find and Replace</li>
+                          <li>📜 Auto Scroll</li>
+                          <li>💾 Export to HTML</li>
+                          <li>🔄 Auto update feature</li>
+                          <li>😊 Emoji support (coming soon)</li>
+                      </ul>
+                  </section>
+
+                  <footer>
+                      <p>Licensed under the <a href="LICENSE">MIT license</a></p>
+                      <p><a href="https://github.com/${{ github.repository }}">View on GitHub</a></p>
+                  </footer>
+              </div>
+              <script src="scripts/index.js"></script>
+          </body>
+          </html>
+          EOF
+
+      - name: Update JavaScript for better OS detection and downloads
+        run: |
+          cat > scripts/index.js << 'EOF'
+          const REPO = '${{ github.repository }}';
+          const RUN_ID = '${{ github.run_id }}';
+
+          const platformConfig = {
+            'Mac OS': {
+              icon: '🍎',
+              text: 'Download for macOS',
+              filename: 'dmg',
+              artifactName: 'markit-mac'
+            },
+            'Windows': {
+              icon: '🪟',
+              text: 'Download for Windows',
+              filename: 'exe',
+              artifactName: 'markit-windows'
+            },
+            'Linux': {
+              icon: '🐧',
+              text: 'Download for Linux',
+              filename: 'AppImage',
+              artifactName: 'markit-linux'
+            }
+          };
+
+          const getOS = () => {
+            const userAgent = window.navigator.userAgent;
+            const platform = window.navigator.platform;
+            const macosPlatforms = ["Macintosh", "MacIntel", "MacPPC", "Mac68K"];
+            const windowsPlatforms = ["Win32", "Win64", "Windows", "WinCE"];
+
+            if (macosPlatforms.indexOf(platform) !== -1) {
+              return "Mac OS";
+            } else if (windowsPlatforms.indexOf(platform) !== -1) {
+              return "Windows";
+            } else if (/Linux/.test(platform)) {
+              return "Linux";
+            }
+            return "Linux"; // Default to Linux
+          };
+
+          const setupDownloads = () => {
+            const detectedOS = getOS();
+            const osElement = document.getElementById("os");
+            const primaryDownloadBtn = document.getElementById("primary-download");
+            const primaryDownloadText = document.getElementById("primary-download-text");
+            const platformIcon = document.getElementById("platform-icon");
+            const platformLinks = document.getElementById("platform-links");
+
+            // Update detected OS display
+            osElement.innerText = detectedOS;
+
+            // Get config for detected OS
+            const config = platformConfig[detectedOS];
+
+            // Update primary download button
+            if (config) {
+              platformIcon.innerText = config.icon;
+              primaryDownloadText.innerText = config.text;
+              primaryDownloadBtn.href = `https://github.com/${REPO}/actions/runs/${RUN_ID}`;
+              primaryDownloadBtn.dataset.platform = detectedOS;
+            }
+
+            // Create links for other platforms
+            Object.entries(platformConfig).forEach(([os, conf]) => {
+              if (os !== detectedOS) {
+                const link = document.createElement('a');
+                link.href = `https://github.com/${REPO}/actions/runs/${RUN_ID}`;
+                link.innerHTML = `${conf.icon} ${conf.text} (.${conf.filename})`;
+                link.className = 'platform-link';
+                platformLinks.appendChild(link);
+              }
+            });
+          };
+
+          window.addEventListener("load", setupDownloads);
+          EOF
+
+      - name: Update styles
+        run: |
+          cat > styles/styles.css << 'EOF'
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+          }
+
+          .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+          }
+
+          header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+          }
+
+          .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          }
+
+          h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+          }
+
+          .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 15px;
+          }
+
+          .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+          }
+
+          .download-section {
+            padding: 60px 40px;
+            text-align: center;
+            background: #f8f9fa;
+          }
+
+          .download-section h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            color: #333;
+          }
+
+          .download-buttons {
+            margin: 30px 0;
+          }
+
+          .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 40px;
+            font-size: 1.3em;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          }
+
+          .download-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+          }
+
+          .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+          }
+
+          .platform-icon {
+            font-size: 1.5em;
+          }
+
+          .other-downloads {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #dee2e6;
+          }
+
+          .other-downloads p {
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 500;
+          }
+
+          .platform-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+          }
+
+          .platform-link {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 30px;
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s ease;
+          }
+
+          .platform-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+          }
+
+          .release-note {
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.95em;
+          }
+
+          .release-note a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+          }
+
+          .release-note a:hover {
+            text-decoration: underline;
+          }
+
+          .demo-section {
+            padding: 60px 40px;
+            background: white;
+          }
+
+          .demo-section h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #333;
+          }
+
+          .demo-image {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+          }
+
+          .features-section {
+            padding: 60px 40px;
+            background: #f8f9fa;
+          }
+
+          .features-section h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #333;
+          }
+
+          .features-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+
+          .features-list li {
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            font-size: 1.1em;
+            transition: transform 0.3s ease;
+          }
+
+          .features-list li:hover {
+            transform: translateY(-5px);
+          }
+
+          footer {
+            padding: 40px;
+            text-align: center;
+            background: #2c3e50;
+            color: white;
+          }
+
+          footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+          }
+
+          footer a:hover {
+            text-decoration: underline;
+          }
+
+          footer p {
+            margin: 10px 0;
+          }
+
+          @media (max-width: 768px) {
+            h1 {
+              font-size: 2em;
+            }
+
+            .download-btn {
+              padding: 15px 30px;
+              font-size: 1.1em;
+            }
+
+            .platform-links {
+              flex-direction: column;
+              align-items: center;
+            }
+
+            .features-list {
+              grid-template-columns: 1fr;
+            }
+          }
+          EOF
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md index.html scripts/index.js styles/styles.css
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update download links with artifacts from run ${{ github.run_id }}" && git push)
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/markit-mac/*.dmg
+            artifacts/markit-linux/*.AppImage
+            artifacts/markit-windows/*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
