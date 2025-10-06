@@ -1,0 +1,40 @@
+# Tauri ignore file - files to exclude from app bundle
+
+# Development
+node_modules
+.git
+.github
+.vscode
+.idea
+
+# Tests
+__tests__
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+coverage
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Old Electron
+src/electron
+
+# Build artifacts
+src/renderer/.next
+src/renderer/out
+dist
+build
+
+# Config
+.editorconfig
+.prettierrc
+.eslintrc
+tsconfig.json
+jest.config.js
+
+# CI/CD
+.github/workflows

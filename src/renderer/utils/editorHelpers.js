@@ -130,20 +130,46 @@ const downLoadDoc = () => {
   document.body.removeChild(a)
 }
 
-const exportToPNG = async (previewElement) => {
+const exportToPNG = async (previewElement, filePath) => {
   try {
     const { toPng } = await import('html-to-image')
     const dataUrl = await toPng(previewElement, {
       quality: 0.95,
-      pixelRatio: 2
+      pixelRatio: 2,
+      backgroundColor: '#ffffff'
     })
 
-    const link = document.createElement('a')
-    link.download = 'export.png'
-    link.href = dataUrl
-    link.click()
+    if (filePath) {
+      // Save via IPC
+      const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '')
+      await window.api.invoke('SAVE_PNG_FILE', { filePath, data: base64Data })
+    } else {
+      // Fallback to download
+      const link = document.createElement('a')
+      link.download = 'export.png'
+      link.href = dataUrl
+      link.click()
+    }
   } catch (error) {
     console.error('Failed to export PNG:', error)
+    throw error
+  }
+}
+
+const exportToPDF = async (previewElement, filePath) => {
+  try {
+    const { default: html2pdf } = await import('html2pdf.js')
+    const opt = {
+      margin: 10,
+      filename: filePath || 'export.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }
+    await html2pdf().set(opt).from(previewElement).save()
+  } catch (error) {
+    console.error('Failed to export PDF:', error)
+    throw error
   }
 }
 
@@ -196,4 +222,4 @@ const publishGist = async (content, filename, isSecret) => {
   }
 }
 
-export { getElement, getLineNumber, srollToElement, onScroll, selectAll, downLoadDoc, exportToPNG, copyHTMLToClipboard, publishGist }
+export { getElement, getLineNumber, srollToElement, onScroll, selectAll, downLoadDoc, exportToPNG, exportToPDF, copyHTMLToClipboard, publishGist }

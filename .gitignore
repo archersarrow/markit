@@ -43,3 +43,10 @@ renderer/.next
 
 src/renderer/.next
 src/renderer/out
+# Tauri
+src-tauri/target
+src-tauri/Cargo.lock
+src-tauri/WixTools
+
+# Old Electron files
+src/electron/

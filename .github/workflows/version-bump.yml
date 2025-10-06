@@ -1,0 +1,91 @@
+name: Version Bump on Merge to Master
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - gh-pages
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip-version]')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Read current version
+        id: read_version
+        run: |
+          VERSION=$(grep 'version:' version.yml | awk '{print $2}')
+          echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Bump patch version
+        id: bump_version
+        run: |
+          CURRENT_VERSION=$(grep 'version:' version.yml | awk '{print $2}')
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "version: $NEW_VERSION" > version.yml
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Bumped version to: $NEW_VERSION"
+
+      - name: Update package.json and Tauri version
+        run: |
+          NEW_VERSION=$(grep 'version:' version.yml | awk '{print $2}')
+          npm version $NEW_VERSION --no-git-tag-version --allow-same-version
+
+          # Update Tauri conf version
+          if [ -f "src-tauri/tauri.conf.json" ]; then
+            sed -i.bak "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" src-tauri/tauri.conf.json
+            rm -f src-tauri/tauri.conf.json.bak
+          fi
+
+          # Update Cargo.toml version
+          if [ -f "src-tauri/Cargo.toml" ]; then
+            sed -i.bak "s/^version = \".*\"/version = \"$NEW_VERSION\"/" src-tauri/Cargo.toml
+            rm -f src-tauri/Cargo.toml.bak
+          fi
+
+      - name: Commit version bump
+        run: |
+          git add version.yml package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock 2>/dev/null || true
+          NEW_VERSION=$(grep 'version:' version.yml | awk '{print $2}')
+          git commit -m "chore: bump version to $NEW_VERSION [skip-version]" || echo "No changes to commit"
+          git push origin ${{ github.ref_name }} || echo "Nothing to push"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.bump_version.outputs.new_version }}
+          release_name: Release v${{ steps.bump_version.outputs.new_version }}
+          body: |
+            Automatic release for version ${{ steps.bump_version.outputs.new_version }}
+
+            ## Changes
+            See commit history for details.
+          draft: false
+          prerelease: false
+        continue-on-error: true

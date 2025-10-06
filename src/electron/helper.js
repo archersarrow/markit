@@ -107,11 +107,55 @@ const exportAsHTML = async () => {
       filters: [{ name: 'HTML', extensions: ['html'] }]
     })
     if (!canceled && filePath) {
-      const htmlContent = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>Exported Markdown</title>\n</head>\n<body>\n<div class="markdown-body">${innerHTML}</div>\n</body>\n</html>`
+      const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exported Markdown</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #24292e;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px;
+      background: #fff;
+    }
+    .markdown-body { word-wrap: break-word; }
+    .markdown-body h1, .markdown-body h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+    .markdown-body h1 { font-size: 2em; margin: 0.67em 0; }
+    .markdown-body h2 { font-size: 1.5em; margin: 0.75em 0; }
+    .markdown-body h3 { font-size: 1.25em; margin: 1em 0; }
+    .markdown-body code { background-color: rgba(27, 31, 35, 0.05); border-radius: 3px; font-family: 'Courier New', Courier, monospace; font-size: 85%; padding: 0.2em 0.4em; }
+    .markdown-body pre { background-color: #f6f8fa; border-radius: 3px; font-size: 85%; line-height: 1.45; overflow: auto; padding: 16px; }
+    .markdown-body pre code { background-color: transparent; padding: 0; }
+    .markdown-body blockquote { border-left: 4px solid #dfe2e5; color: #6a737d; padding: 0 1em; margin: 0; }
+    .markdown-body table { border-collapse: collapse; width: 100%; }
+    .markdown-body table th, .markdown-body table td { border: 1px solid #dfe2e5; padding: 6px 13px; }
+    .markdown-body table tr:nth-child(2n) { background-color: #f6f8fa; }
+    .markdown-body img { max-width: 100%; }
+    .markdown-body a { color: #0366d6; text-decoration: none; }
+    .markdown-body a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="markdown-body">${innerHTML}</div>
+</body>
+</html>`
       fs.writeFileSync(filePath, htmlContent)
+      BrowserWindow.getFocusedWindow()?.webContents.send('SHOW_TOAST', {
+        message: 'HTML exported successfully',
+        type: 'success'
+      })
     }
   } catch (e) {
     console.error('Failed to export HTML', e)
+    BrowserWindow.getFocusedWindow()?.webContents.send('SHOW_TOAST', {
+      message: 'Failed to export HTML',
+      type: 'error'
+    })
   } finally {
     exportHtmlBusy = false
   }
@@ -123,20 +167,26 @@ const exportAsPDF = async () => {
   try {
     const win = BrowserWindow.getFocusedWindow()
     if (!win) return
-    const pdfData = await win.webContents.printToPDF({
-      printBackground: true,
-      marginsType: 1,
-      pageSize: 'A4'
-    })
+
     const { filePath, canceled } = await dialog.showSaveDialog(win, {
       defaultPath: 'export.pdf',
       filters: [{ name: 'PDF', extensions: ['pdf'] }]
     })
+
     if (!canceled && filePath) {
-      fs.writeFileSync(filePath, pdfData)
+      // Trigger the renderer to export PDF from preview only
+      win.webContents.send('DO_EXPORT_PDF', filePath)
+      win.webContents.send('SHOW_TOAST', {
+        message: 'PDF exported successfully',
+        type: 'success'
+      })
     }
   } catch (e) {
     console.error('Failed to export PDF', e)
+    win?.webContents.send('SHOW_TOAST', {
+      message: 'Failed to export PDF',
+      type: 'error'
+    })
   } finally {
     exportPdfBusy = false
   }
@@ -148,17 +198,26 @@ const exportAsPNG = async () => {
   try {
     const win = BrowserWindow.getFocusedWindow()
     if (!win) return
-    const image = await win.webContents.capturePage()
-    const pngBuffer = image.toPNG()
+
     const { filePath, canceled } = await dialog.showSaveDialog(win, {
       defaultPath: 'export.png',
       filters: [{ name: 'PNG', extensions: ['png'] }]
     })
+
     if (!canceled && filePath) {
-      fs.writeFileSync(filePath, pngBuffer)
+      // Trigger the renderer to export PNG from preview only
+      win.webContents.send('DO_EXPORT_PNG', filePath)
+      win.webContents.send('SHOW_TOAST', {
+        message: 'PNG exported successfully',
+        type: 'success'
+      })
     }
   } catch (e) {
     console.error('Failed to export PNG', e)
+    win?.webContents.send('SHOW_TOAST', {
+      message: 'Failed to export PNG',
+      type: 'error'
+    })
   } finally {
     exportPngBusy = false
   }

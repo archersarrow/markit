@@ -7,51 +7,21 @@
     "type": "git",
     "url": "git+https://github.com/saketh-kowtha/markit.git"
   },
-  "main": "./src/electron/main.js",
   "scripts": {
-    "dev": "next dev src/renderer",
-    "clean": "rm -rf dist src/renderer/.next src/renderer/out",
+    "next:dev": "cd src/renderer && next dev",
+    "dev": "tauri dev",
+    "clean": "rm -rf dist src/renderer/.next src/renderer/out node_modules/.cache src-tauri/target",
     "test": "jest --maxWorkers=4",
-    "start": "electron .",
-    "postinstall": "electron-builder install-app-deps",
-    "build": "next build src/renderer && electron-builder --mac",
-    "dist": "next build src/renderer",
-    "release": "next build src/renderer && electron-builder --windows --linux --publish always"
-  },
-  "build": {
-    "productName": "MarkIt",
-    "publish": {
-      "provider": "github",
-      "repo": "markit",
-      "owner": "saketh-kowtha",
-      "protocol": "https",
-      "private": "false",
-      "releaseType": "release"
-    },
-    "mac": {
-      "icon": "./images/logo.icns"
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Productivity",
-      "icon": "./images/logo.png"
-    },
-    "win": {
-      "icon": "./images/logo.ico"
-    },
-    "asar": true,
-    "files": [
-      "src/electron",
-      "src/renderer/out"
-    ]
+    "build": "npm run clean && tauri build",
+    "build:mac": "tauri build --target universal-apple-darwin",
+    "build:linux": "tauri build --target x86_64-unknown-linux-gnu",
+    "build:windows": "tauri build --target x86_64-pc-windows-msvc",
+    "tauri": "tauri",
+    "analyze": "du -sh node_modules/* | sort -hr | head -20"
   },
   "dependencies": {
+    "@tauri-apps/api": "^1.5.3",
     "codemirror": "^5.65.18",
-    "electron-log": "^5.2.4",
-    "electron-store": "8.1.0",
-    "electron-updater": "^6.3.9",
     "fuse.js": "^7.1.0",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.23",
@@ -69,13 +39,12 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^1.5.11",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "babel-jest": "^29.7.0",
     "babel-plugin-react-remove-properties": "^0.3.0",
-    "electron": "^33.2.1",
-    "electron-builder": "^25.1.8",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "react-test-renderer": "^18.3.1",

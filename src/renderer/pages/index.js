@@ -3,9 +3,10 @@ import dynamic from 'next/dynamic'
 import MarkdowPreview from '../components/MarkdownPreview'
 import FileTree from '../components/FileTree'
 import TabBar from '../components/TabBar'
+import ToastContainer from '../components/Toast'
 import editorOptions from '../config/editorOptions'
 import useIpcEvents from '../hooks/useIpcEvents'
-import { getLineNumber, onScroll, selectAll, getElement, srollToElement, downLoadDoc, exportToPNG, copyHTMLToClipboard, publishGist } from '../utils/editorHelpers'
+import { getLineNumber, onScroll, selectAll, getElement, srollToElement, downLoadDoc, exportToPNG, exportToPDF, copyHTMLToClipboard, publishGist } from '../utils/editorHelpers'
 import { SELECT_ALL, SET_EDITOR_TEXT, SET_THEME, SET_ALLOW_HTML, SAVE_CONTENT_IN_STORE } from '../constants'
 // Client-only CodeMirror to avoid SSR hydration mismatch
 const CodeMirrorControlled = dynamic(async () => {
@@ -167,21 +168,34 @@ const Home = () => {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      const { content, theme, allowHtml } = await window.api.invoke('GET_GLOBALS')
+      const { content, theme, allowHtml, workspacePath } = await window.api.invoke('GET_GLOBALS')
       setContent(content || '')
       contentRef.current = content || ''
       setAllowHtml(allowHtml || false)
       setTheme(theme || 'yonce')
+      if (workspacePath) {
+        setWorkspacePath(workspacePath)
+      }
       if (editor?.current) editor.current.focus()
     }
 
-    const handleExportPdf = () => {
-      window.api.send('EXPORT_TO_PDF')
+    const handleExportPdf = async (_, filePath) => {
+      if (previewRef.current) {
+        try {
+          await exportToPDF(previewRef.current, filePath)
+        } catch (err) {
+          console.error('PDF export failed:', err)
+        }
+      }
     }
 
-    const handleExportPng = () => {
+    const handleExportPng = async (_, filePath) => {
       if (previewRef.current) {
-        exportToPNG(previewRef.current)
+        try {
+          await exportToPNG(previewRef.current, filePath)
+        } catch (err) {
+          console.error('PNG export failed:', err)
+        }
       }
     }
 
@@ -213,22 +227,25 @@ const Home = () => {
     if (!ipcBoundRef.current) {
       ipcBoundRef.current = true
       window.api.on('EXPORT_TO_HTML', downLoadDoc)
-      window.api.on('EXPORT_TO_PDF', handleExportPdf)
-      window.api.on('EXPORT_TO_PNG', handleExportPng)
+      window.api.on('DO_EXPORT_PDF', handleExportPdf)
+      window.api.on('DO_EXPORT_PNG', handleExportPng)
       window.api.on('COPY_HTML_TO_CLIPBOARD', handleCopyHtml)
       window.api.on('PUBLISH_GIST', handlePublishGist)
       window.api.on('TOGGLE_TOC', handleToggleToc)
       window.api.on('OPEN_SETTINGS', handleOpenSettings)
       window.api.on('OPEN_WORKSPACE_FOLDER', handleOpenFolder)
-      window.api.on('WORKSPACE_OPENED', (_, path) => setWorkspacePath(path))
+      window.api.on('WORKSPACE_OPENED', (_, path) => {
+        console.log('Workspace opened:', path)
+        setWorkspacePath(path)
+      })
     }
 
     return () => {
       if (ipcBoundRef.current) {
         ipcBoundRef.current = false
         window.api.removeListener('EXPORT_TO_HTML', downLoadDoc)
-        window.api.removeListener('EXPORT_TO_PDF', handleExportPdf)
-        window.api.removeListener('EXPORT_TO_PNG', handleExportPng)
+        window.api.removeListener('DO_EXPORT_PDF', handleExportPdf)
+        window.api.removeListener('DO_EXPORT_PNG', handleExportPng)
         window.api.removeListener('COPY_HTML_TO_CLIPBOARD', handleCopyHtml)
         window.api.removeListener('PUBLISH_GIST', handlePublishGist)
         window.api.removeListener('TOGGLE_TOC', handleToggleToc)
@@ -240,20 +257,23 @@ const Home = () => {
   }, [])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {tabs.length > 0 && (
-        <TabBar
-          tabs={tabs}
-          activeTab={activeTabPath}
-          onTabClick={handleTabClick}
-          onTabClose={handleTabClose}
-        />
-      )}
+    <>
+      <ToastContainer />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        {tabs.length > 0 && (
+          <TabBar
+            tabs={tabs}
+            activeTab={activeTabPath}
+            onTabClick={handleTabClick}
+            onTabClose={handleTabClose}
+            theme={theme}
+          />
+        )}
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {workspacePath && (
-          <div style={{ width: '250px', borderRight: '1px solid #ddd', overflow: 'hidden' }}>
-            <FileTree workspacePath={workspacePath} onFileClick={handleFileClick} />
+          <div style={{ width: '250px', borderRight: '1px solid #323232', overflow: 'hidden' }}>
+            <FileTree workspacePath={workspacePath} onFileClick={handleFileClick} theme={theme} />
           </div>
         )}
 
@@ -283,46 +303,162 @@ const Home = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          animation: 'fadeIn 0.2s ease'
         }}>
           <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
-            minWidth: '400px'
+            backgroundColor: '#FFFFFF',
+            padding: '0',
+            borderRadius: '12px',
+            minWidth: '480px',
+            maxWidth: '600px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            animation: 'slideUp 0.3s ease'
           }}>
-            <h2>Settings</h2>
-            <div style={{ margin: '12px 0' }}>
-              <label htmlFor="gh-token" style={{ display: 'block', fontSize: 12, color: '#555' }}>GitHub Personal Access Token</label>
-              <input
-                id="gh-token"
-                type="password"
-                value={githubToken}
-                onChange={(e) => setGithubToken(e.target.value)}
-                placeholder="ghp_..."
-                style={{ width: '100%', padding: '8px', marginTop: 6 }}
-              />
-              <div style={{ fontSize: 12, color: '#777', marginTop: 6 }}>Used for publishing gists.</div>
+            <div style={{
+              padding: '24px 28px',
+              borderBottom: '1px solid #E5E7EB',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <h2 style={{
+                margin: 0,
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#1F2937'
+              }}>Settings</h2>
+              <button
+                onClick={() => setSettingsOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6B7280',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  transition: 'background-color 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#F3F4F6'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                ×
+              </button>
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setSettingsOpen(false)}>Cancel</button>
-              <button onClick={async () => {
-                try {
-                  await window.api.invoke('SET_GITHUB_TOKEN', githubToken)
-                  setSettingsOpen(false)
-                } catch (e) {
-                  console.error('Failed to save token', e)
-                }
-              }}>Save</button>
+
+            <div style={{ padding: '24px 28px' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <label htmlFor="gh-token" style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}>
+                  GitHub Personal Access Token
+                </label>
+                <input
+                  id="gh-token"
+                  type="password"
+                  value={githubToken}
+                  onChange={(e) => setGithubToken(e.target.value)}
+                  placeholder="ghp_..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                    fontFamily: 'monospace'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3B82F6'
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#D1D5DB'
+                    e.target.style.boxShadow = 'none'
+                  }}
+                />
+                <div style={{
+                  fontSize: '13px',
+                  color: '#6B7280',
+                  marginTop: '8px',
+                  lineHeight: '1.5'
+                }}>
+                  Used for publishing gists. You can create a token at{' '}
+                  <a href="#" style={{ color: '#3B82F6', textDecoration: 'none' }}>github.com/settings/tokens</a>
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              padding: '16px 28px',
+              backgroundColor: '#F9FAFB',
+              borderTop: '1px solid #E5E7EB',
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              borderRadius: '0 0 12px 12px'
+            }}>
+              <button
+                onClick={() => setSettingsOpen(false)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#F9FAFB'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#FFFFFF'}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await window.api.invoke('SET_GITHUB_TOKEN', githubToken)
+                    setSettingsOpen(false)
+                  } catch (e) {
+                    console.error('Failed to save token', e)
+                  }
+                }}
+                style={{
+                  padding: '8px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#FFFFFF',
+                  backgroundColor: '#3B82F6',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563EB'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#3B82F6'}
+              >
+                Save Changes
+              </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
 

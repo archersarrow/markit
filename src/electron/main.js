@@ -72,7 +72,8 @@ app.whenReady().then(async () => {
   ipcMain.handle('GET_GLOBALS', () => ({
     content: getContent(),
     theme: getTheme(),
-    allowHtml: getAllowHtml()
+    allowHtml: getAllowHtml(),
+    workspacePath: getWorkspacePath()
   }))
 
   ipcMain.on(GET_CONTENT_FROM_STORE, (event, data) => updateContent(BrowserWindow.getFocusedWindow()))
@@ -201,6 +202,17 @@ app.whenReady().then(async () => {
       return true
     } catch (error) {
       log.error('Failed to set GitHub token:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('SAVE_PNG_FILE', async (event, { filePath, data }) => {
+    try {
+      const buffer = Buffer.from(data, 'base64')
+      await writeFile(filePath, buffer)
+      return true
+    } catch (error) {
+      log.error('Failed to save PNG file:', error)
       throw error
     }
   })

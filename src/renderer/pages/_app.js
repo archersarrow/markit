@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import '../styles/globals.css'
 import '../../../node_modules/codemirror/lib/codemirror.css'
 import '../../../node_modules/codemirror/theme/yonce.css'
@@ -16,6 +17,15 @@ import '../../../node_modules/codemirror/theme/neo.css'
 import '../../../node_modules/codemirror/theme/base16-light.css'
 
 function MyApp({ Component, pageProps }) {
+  useEffect(() => {
+    // Initialize Tauri API bridge
+    if (typeof window !== 'undefined' && !window.api) {
+      import('../lib/tauri-api').then(module => {
+        window.api = module.default
+      })
+    }
+  }, [])
+
   return <Component {...pageProps} />
 }
 

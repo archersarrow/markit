@@ -1,11 +1,37 @@
-const { app } = require('electron')
+const { app, dialog } = require('electron')
 const { openFile, openFolder, saveFileAs, saveFile, clearAll, exportAsHTML, exportAsPDF, exportAsPNG } = require('../helper')
 const { selectAll } = require('../actions')
 const shell = require('electron').shell
+const fs = require('fs')
+const path = require('path')
 
 const themes = require('../constants/themes.json')
 const { SET_THEME, SET_ALLOW_HTML } = require('../constants')
 const { getTheme, setTheme, getAllowHtml, setAllowHtml } = require('../store/store')
+
+// Read version from version.yml
+const getAppVersion = () => {
+  try {
+    const versionPath = path.join(__dirname, '../../../version.yml')
+    const versionContent = fs.readFileSync(versionPath, 'utf-8')
+    const match = versionContent.match(/version:\s*(.+)/)
+    return match ? match[1].trim() : '1.0.1'
+  } catch (e) {
+    return '1.0.1'
+  }
+}
+
+const showAboutDialog = () => {
+  const version = getAppVersion()
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'About MarkIt',
+    message: 'MarkIt',
+    detail: `Version: ${version}\n\nA beautiful markdown editor and viewer.\n\n© ${new Date().getFullYear()} Saketh Kowtha`,
+    buttons: ['OK'],
+    icon: path.join(__dirname, '../../images/logo.png')
+  })
+}
 
 module.exports = mainWindow => {
   const menuItems = [
@@ -35,13 +61,6 @@ module.exports = mainWindow => {
             saveFile()
           },
           accelerator: 'CmdOrCtrl+S'
-        },
-        {
-          label: 'Save As',
-          click() {
-            saveFileAs()
-          },
-          accelerator: 'CmdOrCtrl+Shift+S'
         },
         {
           type: 'separator'
@@ -210,6 +229,13 @@ module.exports = mainWindow => {
       label: 'Help',
       submenu: [
         {
+          label: 'About MarkIt',
+          click: showAboutDialog
+        },
+        {
+          type: 'separator'
+        },
+        {
           label: 'Welcome',
           click() {
             shell.openExternal('https://saketh-kowtha.github.io/markit/')
@@ -248,9 +274,9 @@ module.exports = mainWindow => {
     menuItems.unshift({
       label: 'MarkIt',
       submenu: [
-        { label: 'About ' + name, role: 'about' },
         {
-          type: 'separator'
+          label: 'About MarkIt',
+          click: showAboutDialog
         },
         {
           type: 'separator'

@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, memo } from 'react'
+import { getThemeConfig } from '../config/themes'
 
-const FileTreeNode = ({ item, level, onFileClick, expandedDirs, toggleDir }) => {
+const FileTreeNode = memo(({ item, level, onFileClick, expandedDirs, toggleDir, theme }) => {
+  const themeConfig = getThemeConfig(theme)
   const isExpanded = expandedDirs[item.path]
   const [children, setChildren] = useState([])
 
@@ -28,28 +30,57 @@ const FileTreeNode = ({ item, level, onFileClick, expandedDirs, toggleDir }) => 
     }
   }
 
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
     <div>
       <div
         onClick={handleClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         style={{
-          paddingLeft: `${level * 16}px`,
-          padding: '4px 8px',
+          paddingLeft: `${12 + level * 16}px`,
+          paddingRight: '12px',
+          paddingTop: '6px',
+          paddingBottom: '6px',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           fontSize: '13px',
-          userSelect: 'none'
+          userSelect: 'none',
+          color: themeConfig.ui.text,
+          backgroundColor: isHovered ? themeConfig.ui.hover : 'transparent',
+          transition: 'background-color 0.15s ease, color 0.15s ease',
+          borderRadius: '4px',
+          margin: '1px 6px'
         }}
-        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
       >
         {item.isDirectory && (
-          <span style={{ marginRight: '4px' }}>
-            {isExpanded ? '▼' : '▶'}
+          <span style={{
+            marginRight: '6px',
+            fontSize: '10px',
+            color: themeConfig.ui.textSecondary,
+            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+            display: 'inline-block'
+          }}>
+            ▶
           </span>
         )}
-        <span>{item.name}</span>
+        {!item.isDirectory && (
+          <span style={{ marginRight: '6px', fontSize: '12px', opacity: 0.6 }}>📄</span>
+        )}
+        {item.isDirectory && (
+          <span style={{ marginRight: '6px', fontSize: '12px' }}>{isExpanded ? '📂' : '📁'}</span>
+        )}
+        <span style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          fontWeight: item.isDirectory ? '500' : '400'
+        }}>
+          {item.name}
+        </span>
       </div>
       {item.isDirectory && isExpanded && children.map(child => (
         <FileTreeNode
@@ -59,15 +90,19 @@ const FileTreeNode = ({ item, level, onFileClick, expandedDirs, toggleDir }) => 
           onFileClick={onFileClick}
           expandedDirs={expandedDirs}
           toggleDir={toggleDir}
+          theme={theme}
         />
       ))}
     </div>
   )
-}
+})
 
-const FileTree = ({ workspacePath, onFileClick }) => {
+FileTreeNode.displayName = 'FileTreeNode'
+
+const FileTree = memo(({ workspacePath, onFileClick, theme = 'yonce' }) => {
   const [files, setFiles] = useState([])
   const [expandedDirs, setExpandedDirs] = useState({})
+  const themeConfig = getThemeConfig(theme)
 
   useEffect(() => {
     if (workspacePath) {
@@ -95,26 +130,55 @@ const FileTree = ({ workspacePath, onFileClick }) => {
 
   if (!workspacePath) {
     return (
-      <div style={{ padding: '16px', color: '#666', fontSize: '13px' }}>
-        No workspace opened. Use File → Open Folder...
+      <div style={{
+        padding: '20px 16px',
+        color: themeConfig.ui.textSecondary,
+        fontSize: '13px',
+        textAlign: 'center',
+        lineHeight: '1.5'
+      }}>
+        <div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.5 }}>📁</div>
+        <div style={{ fontWeight: '500', marginBottom: '4px' }}>No Workspace</div>
+        <div style={{ fontSize: '12px' }}>Use File → Open Folder...</div>
       </div>
     )
   }
 
   return (
-    <div style={{ height: '100%', overflow: 'auto', backgroundColor: '#fafafa' }}>
-      {files.map(file => (
-        <FileTreeNode
-          key={file.path}
-          item={file}
-          level={0}
-          onFileClick={onFileClick}
-          expandedDirs={expandedDirs}
-          toggleDir={toggleDir}
-        />
-      ))}
+    <div style={{
+      height: '100%',
+      overflow: 'auto',
+      backgroundColor: themeConfig.ui.sidebar,
+      padding: '8px 0'
+    }}>
+      <div style={{
+        padding: '8px 12px 12px 12px',
+        fontSize: '11px',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        color: themeConfig.ui.textSecondary,
+        borderBottom: `1px solid ${themeConfig.ui.border}`
+      }}>
+        Explorer
+      </div>
+      <div style={{ paddingTop: '8px' }}>
+        {files.map(file => (
+          <FileTreeNode
+            key={file.path}
+            item={file}
+            level={0}
+            onFileClick={onFileClick}
+            expandedDirs={expandedDirs}
+            toggleDir={toggleDir}
+            theme={theme}
+          />
+        ))}
+      </div>
     </div>
   )
-}
+})
+
+FileTree.displayName = 'FileTree'
 
 export default FileTree
