@@ -233,11 +233,26 @@ const Home = () => {
       window.api.on('PUBLISH_GIST', handlePublishGist)
       window.api.on('TOGGLE_TOC', handleToggleToc)
       window.api.on('OPEN_SETTINGS', handleOpenSettings)
+      window.api.on('OPEN_URL', async (_, url) => {
+        try {
+          const { open } = await import('@tauri-apps/api/shell')
+          await open(url)
+        } catch (e) {
+          console.error('Failed to open url', url, e)
+        }
+      })
       window.api.on('OPEN_WORKSPACE_FOLDER', handleOpenFolder)
       window.api.on('WORKSPACE_OPENED', (_, path) => {
         console.log('Workspace opened:', path)
         setWorkspacePath(path)
       })
+      // Edit menu wiring
+      window.api.on('EDIT_UNDO', () => editor.current && editor.current.undo())
+      window.api.on('EDIT_REDO', () => editor.current && editor.current.redo())
+      window.api.on('EDIT_CUT', () => document.execCommand('cut'))
+      window.api.on('EDIT_COPY', () => document.execCommand('copy'))
+      window.api.on('EDIT_PASTE', () => document.execCommand('paste'))
+      window.api.on('EDIT_SELECT_ALL', () => editor.current && editor.current.execCommand('selectAll'))
     }
 
     return () => {
@@ -251,7 +266,14 @@ const Home = () => {
         window.api.removeListener('TOGGLE_TOC', handleToggleToc)
         window.api.removeListener('OPEN_SETTINGS', handleOpenSettings)
         window.api.removeListener('OPEN_WORKSPACE_FOLDER', handleOpenFolder)
+        window.api.removeListener('OPEN_URL', () => {})
         window.api.removeListener('WORKSPACE_OPENED', () => {})
+        window.api.removeListener('EDIT_UNDO', () => {})
+        window.api.removeListener('EDIT_REDO', () => {})
+        window.api.removeListener('EDIT_CUT', () => {})
+        window.api.removeListener('EDIT_COPY', () => {})
+        window.api.removeListener('EDIT_PASTE', () => {})
+        window.api.removeListener('EDIT_SELECT_ALL', () => {})
       }
     }
   }, [])

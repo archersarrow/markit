@@ -9,10 +9,12 @@ const FileTreeNode = memo(({ item, level, onFileClick, expandedDirs, toggleDir, 
   useEffect(() => {
     if (item.isDirectory && isExpanded && children.length === 0) {
       window.api.fs.listDir(item.path).then(entries => {
-        // Filter to only show .md files and directories
-        const filtered = entries.filter(e =>
-          e.isDirectory || e.extension === '.md' || e.extension === '.markdown'
-        )
+        // Filter to only show markdown files (handle extensions with/without dot)
+        const filtered = entries.filter(e => {
+          if (e.isDirectory) return true
+          const ext = (e.extension || '').toLowerCase().replace(/^\./, '')
+          return ext === 'md' || ext === 'markdown'
+        })
         setChildren(filtered.sort((a, b) => {
           if (a.isDirectory && !b.isDirectory) return -1
           if (!a.isDirectory && b.isDirectory) return 1
@@ -107,9 +109,11 @@ const FileTree = memo(({ workspacePath, onFileClick, theme = 'yonce' }) => {
   useEffect(() => {
     if (workspacePath) {
       window.api.fs.listDir(workspacePath).then(entries => {
-        const filtered = entries.filter(e =>
-          e.isDirectory || e.extension === '.md' || e.extension === '.markdown'
-        )
+        const filtered = entries.filter(e => {
+          if (e.isDirectory) return true
+          const ext = (e.extension || '').toLowerCase().replace(/^\./, '')
+          return ext === 'md' || ext === 'markdown'
+        })
         setFiles(filtered.sort((a, b) => {
           if (a.isDirectory && !b.isDirectory) return -1
           if (!a.isDirectory && b.isDirectory) return 1

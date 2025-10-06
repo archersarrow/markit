@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import '../styles/globals.css'
+import 'github-markdown-css/github-markdown.css'
 import '../../../node_modules/codemirror/lib/codemirror.css'
 import '../../../node_modules/codemirror/theme/yonce.css'
 import '../../../node_modules/codemirror/theme/ayu-dark.css'
@@ -16,9 +17,15 @@ import '../../../node_modules/codemirror/theme/neat.css'
 import '../../../node_modules/codemirror/theme/neo.css'
 import '../../../node_modules/codemirror/theme/base16-light.css'
 
+// Initialize Tauri API bridge as early as possible in the browser
+if (typeof window !== 'undefined' && !window.api) {
+  // eslint-disable-next-line global-require
+  require('../lib/tauri-api')
+}
+
 function MyApp({ Component, pageProps }) {
   useEffect(() => {
-    // Initialize Tauri API bridge
+    // Fallback init (no-op if already set)
     if (typeof window !== 'undefined' && !window.api) {
       import('../lib/tauri-api').then(module => {
         window.api = module.default
