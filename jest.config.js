@@ -1,4 +1,5 @@
 module.exports = {
+  testEnvironment: 'jsdom',
   testPathIgnorePatterns: ['/node_modules/'],
   setupFilesAfterEnv: ['<rootDir>/setupTests.js'],
   moduleNameMapper: {
@@ -13,7 +14,7 @@ module.exports = {
     '<rootDir>/src/electron/'
   ],
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': '<rootDir>/node_modules/babel-jest'
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }]
   },
   testRegex: '/__tests__/.*\\.(test|spec)\\.js?$',
   coverageThreshold: {
